@@ -1,4 +1,31 @@
+//----------------------------------------------------------------------------------------------------------------------
+// Main Parameters
+_IntHeartRate                         ("HeartRate", Int) = 0
 
-        //----------------------------------------------------------------------------------------------------------------------
-        // Custom Properties
-        //_CustomVariable ("Custom Variable", Float) = 0
+// Toggle Controls
+[lilToggleLeft] _ActiveDecalNumber      ("Number Active Toggle", Int) = 0
+[lilToggleLeft] _ActiveDecalTexture     ("Texture Active Toggle", Int) = 0
+
+// Number Texture Properties
+[HDR][lilHDR]   _SpriteNumberTextureColor   ("Color", Color) = (1,1,1,1)
+                _SpriteNumberTexture         ("Texture", 2D) = "white" {}
+[lilVec4]       _TexPositionXVector         ("Number Position X", Vector) = (0.0, 0.0, 0.0, 0.0)
+[lilVec4]       _TexPositionYVector         ("Number Position Y", Vector) = (0.0, 0.0, 0.0, 0.0)
+[lilVec4]       _TexScaleXVector            ("Number Scale X", Vector) = (0.5, 0.5, 0.5, 0.5)
+[lilVec4]       _TexScaleYVector            ("Number Scale Y", Vector) = (0.5, 0.5, 0.5, 0.5)
+[lilAngle]      _NumTexRotation             ("Number Texture Rotation", Range(-1,1)) = 0
+[IntRange]      _NumTexDisplaylength        ("Display Length", Range(1, 6)) = 3
+[Enum(ZERO FILL, 0, SHIFT RIGHT, 1, SHIFT LEFT, 2)]
+                _NumTexAlignment            ("Align of Elapsed Time", Int) = 0
+                _NumTexCharacterOffset      ("Character Offset", Range(-1.0, 1.0)) = 0.0
+[lilToggle]     _SyncDecalNumberTextureScale ("Sync Scale", Int) = 0
+
+// Decal Texture Properties
+[HDR][lilHDR]   _DecalTextureColor          ("Color", Color) = (1,1,1,1)
+                _DecalTexture                ("Texture", 2D) = "white" {}
+[lilVec4]       _DecalPositionXVector        ("Decal Position X", Vector) = (0.0, 0.0, 0.0, 0.0)
+[lilVec4]       _DecalPositionYVector        ("Decal Position Y", Vector) = (0.0, 0.0, 0.0, 0.0)
+[lilVec4]       _DecalScaleXVector           ("Decal Scale X", Vector) = (0.5, 0.5, 0.5, 0.5)
+[lilVec4]       _DecalScaleYVector           ("Decal Scale Y", Vector) = (0.5, 0.5, 0.5, 0.5)
+[lilAngle]      _DecalRotation               ("Decal Rotation", Range(0, 360)) = 0
+[lilToggle]     _SyncDecalTextureScale       ("Sync Scale", Int) = 0
