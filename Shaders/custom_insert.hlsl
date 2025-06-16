@@ -248,3 +248,79 @@ float3 sampleSpriteSigned(float val, float2 uv, float displayLength, float align
         return float3(0.0, 0.0, 0.0);
     }
 }
+
+//------------------------------------------------------------------------------------------------------------------------------
+// Decal Heart Rate Functions
+
+/*!
+ * @brief Apply decal texture to the fragment data.
+ * @param [in,out] fd Fragment data to be modified.
+ * @param [in] samp Sampler for texture sampling.
+ */
+void lilGetDecalTexture(inout lilFragData fd LIL_SAMP_IN_FUNC(samp))
+{
+    if(!_ActiveDecalTexture) return;
+    
+    float2 offset = float2(_DecalPositionXVector.x, _DecalPositionYVector.x);
+    float2 scale = max(float2(_DecalScaleXVector.x, _DecalScaleYVector.x), float2(0.001, 0.001));
+    float angle = -_DecalRotation;
+    float2 uv2 = invAffineTransform(fd.uvMain, offset, angle, scale);
+    
+    float4 decalColor = LIL_SAMPLE_2D(_DecalTexture, sampler_DecalTexture, uv2) * _DecalTextureColor;
+    decalColor.a *= lilIsIn0to1(uv2);
+    
+    if(decalColor.a > 0.0)
+    {
+        float blendAlpha = decalColor.a;
+        
+        #if LIL_RENDER != 0
+            // Handle alpha modes if needed for different render modes
+        #endif
+        
+        fd.col.rgb = lerp(fd.col.rgb, lilBlendColor(fd.col.rgb, decalColor.rgb, blendAlpha, _DecalTextureBlendMode), decalColor.a);
+    }
+}
+
+/*!
+ * @brief Apply numeric display decal to the fragment data.
+ * @param [in,out] fd Fragment data to be modified.
+ * @param [in] samp Sampler for texture sampling.
+ */
+void lilGetDecalNumber(inout lilFragData fd LIL_SAMP_IN_FUNC(samp))
+{
+    if(!_ActiveDecalNumber) return;
+    
+    float2 offset = float2(_TexPositionXVector.x, _TexPositionYVector.x);
+    float2 scale = max(float2(_TexScaleXVector.x, _TexScaleYVector.x), float2(0.001, 0.001));
+    float angle = -_NumTexRotation;
+    float2 numUv = invAffineTransform(fd.uvMain, offset, angle, scale);
+    
+    float heartRateValue = round(float(_IntHeartRate));
+    float3 numberColor = sampleSprite(heartRateValue, numUv, _NumTexDisplaylength, float(_NumTexAlignment), _NumTexCharacterOffset);
+    float numberAlpha = length(numberColor) > 0.01 ? 1.0 : 0.0;
+    numberAlpha *= lilIsIn0to1(numUv);
+    
+    if(numberAlpha > 0.0)
+    {
+        float4 colorNumber = float4(numberColor * _SpriteNumberTextureColor.rgb, numberAlpha * _SpriteNumberTextureColor.a);
+        float blendAlpha = colorNumber.a;
+            #if LIL_RENDER != 0
+            // Handle alpha modes if needed for different render modes
+        #endif
+        
+        fd.col.rgb = lerp(fd.col.rgb, lilBlendColor(fd.col.rgb, colorNumber.rgb, blendAlpha, _NumberTextureBlendMode), colorNumber.a);
+    }
+}
+
+//------------------------------------------------------------------------------------------------------------------------------
+/*!
+ * @brief Alpha mask override for decal processing.
+ * This macro is used to inject decal processing into the shader pipeline
+ * while maintaining proper lighting and transparency handling.
+ */
+#if !defined(OVERRIDE_ALPHAMASK)
+    #define OVERRIDE_ALPHAMASK \
+        /* Apply decal texture first, then numeric overlay */ \
+        lilGetDecalTexture(fd LIL_SAMP_IN(sampler_MainTex)); \
+        lilGetDecalNumber(fd LIL_SAMP_IN(sampler_MainTex));
+#endif

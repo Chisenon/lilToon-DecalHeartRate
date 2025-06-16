@@ -3,16 +3,17 @@ using UnityEditor;
 using UnityEngine;
 
 namespace lilToon
-{
-    public class DHBInspector : lilToonInspector
+{    public class DHBInspector : lilToonInspector
     {
         MaterialProperty _IntHeartRate;
         MaterialProperty _ActiveDecalNumber;
         MaterialProperty _ActiveDecalTexture;
         MaterialProperty _SpriteNumberTexture;
         MaterialProperty _SpriteNumberTextureColor;
+        MaterialProperty _NumberTextureBlendMode;
         MaterialProperty _DecalTexture;
         MaterialProperty _DecalTextureColor;
+        MaterialProperty _DecalTextureBlendMode;
         MaterialProperty _DecalPositionXVector;
         MaterialProperty _DecalPositionYVector;
         MaterialProperty _DecalScaleXVector;
@@ -36,15 +37,15 @@ namespace lilToon
         {
             isCustomShader = true;
             ReplaceToCustomShaders();
-            isShowRenderMode = !material.shader.name.Contains("Optional");
-
-            _IntHeartRate = FindProperty("_IntHeartRate", props);
+            isShowRenderMode = !material.shader.name.Contains("Optional");            _IntHeartRate = FindProperty("_IntHeartRate", props);
             _ActiveDecalNumber = FindProperty("_ActiveDecalNumber", props);
             _ActiveDecalTexture = FindProperty("_ActiveDecalTexture", props);
             _SpriteNumberTexture = FindProperty("_SpriteNumberTexture", props);
             _SpriteNumberTextureColor = FindProperty("_SpriteNumberTextureColor", props);
+            _NumberTextureBlendMode = FindProperty("_NumberTextureBlendMode", props);
             _DecalTexture = FindProperty("_DecalTexture", props);
             _DecalTextureColor = FindProperty("_DecalTextureColor", props);
+            _DecalTextureBlendMode = FindProperty("_DecalTextureBlendMode", props);
             _DecalPositionXVector = FindProperty("_DecalPositionXVector", props);
             _DecalPositionYVector = FindProperty("_DecalPositionYVector", props);
             _DecalScaleXVector = FindProperty("_DecalScaleXVector", props);
@@ -91,11 +92,11 @@ namespace lilToon
                 EditorGUILayout.BeginVertical(boxInnerHalf);
 
                 if(_ActiveDecalNumber.floatValue == 1)
-                {                   
-                    // Texture Settings
+                {                     // Texture Settings
                     EditorGUILayout.LabelField(GetLoc("Texture Settings"), EditorStyles.boldLabel);
                     EditorGUI.indentLevel++;
                     m_MaterialEditor.TexturePropertySingleLine(new GUIContent(GetLoc("Number Texture")), _SpriteNumberTexture, _SpriteNumberTextureColor);
+                    m_MaterialEditor.ShaderProperty(_NumberTextureBlendMode, GetLoc("Blend Mode"));
                     EditorGUI.indentLevel--;
 
                     DrawLine();
@@ -173,11 +174,11 @@ namespace lilToon
                 if(_ActiveDecalTexture.floatValue == 1)
                 {
                     EditorGUILayout.Space();
-                    
-                    // Texture Settings
+                      // Texture Settings
                     EditorGUILayout.LabelField(GetLoc("Texture Settings"), EditorStyles.boldLabel);
                     EditorGUI.indentLevel++;
                     m_MaterialEditor.TexturePropertySingleLine(new GUIContent(GetLoc("Decal Texture")), _DecalTexture, _DecalTextureColor);
+                    m_MaterialEditor.ShaderProperty(_DecalTextureBlendMode, GetLoc("Blend Mode"));
                     EditorGUI.indentLevel--;
 
                     DrawLine();

@@ -9,6 +9,8 @@ _IntHeartRate                         ("HeartRate", Int) = 0
 // Number Texture Properties
 [HDR][lilHDR]   _SpriteNumberTextureColor   ("Color", Color) = (1,1,1,1)
                 _SpriteNumberTexture         ("Texture", 2D) = "white" {}
+[Enum(Normal,0,Multiply,3)]
+                _NumberTextureBlendMode      ("Blend Mode", Int) = 0
 [lilVec4]       _TexPositionXVector         ("Number Position X", Vector) = (0.0, 0.0, 0.0, 0.0)
 [lilVec4]       _TexPositionYVector         ("Number Position Y", Vector) = (0.0, 0.0, 0.0, 0.0)
 [lilVec4]       _TexScaleXVector            ("Number Scale X", Vector) = (0.5, 0.5, 0.5, 0.5)
@@ -23,6 +25,8 @@ _IntHeartRate                         ("HeartRate", Int) = 0
 // Decal Texture Properties
 [HDR][lilHDR]   _DecalTextureColor          ("Color", Color) = (1,1,1,1)
                 _DecalTexture                ("Texture", 2D) = "white" {}
+[Enum(Normal,0,Multiply,3)]
+                _DecalTextureBlendMode       ("Blend Mode", Int) = 0
 [lilVec4]       _DecalPositionXVector        ("Decal Position X", Vector) = (0.0, 0.0, 0.0, 0.0)
 [lilVec4]       _DecalPositionYVector        ("Decal Position Y", Vector) = (0.0, 0.0, 0.0, 0.0)
 [lilVec4]       _DecalScaleXVector           ("Decal Scale X", Vector) = (0.5, 0.5, 0.5, 0.5)
