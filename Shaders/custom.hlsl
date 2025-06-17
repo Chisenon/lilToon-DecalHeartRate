@@ -33,7 +33,13 @@
     float _DecalRotation; \
     int _IntHeartRate; \
     float _DecalNumberEmissionStrength; \
-    float _DecalTextureEmissionStrength;
+    float _DecalTextureEmissionStrength; \
+    bool _UseHeartRateEmission; \
+    float _HeartRateEmissionMin; \
+    float _HeartRateEmissionMax; \
+    bool _UseHeartRateEmissionTexture; \
+    float _HeartRateEmissionMinTexture; \
+    float _HeartRateEmissionMaxTexture;
 
 // Custom textures
 #define LIL_CUSTOM_TEXTURES \

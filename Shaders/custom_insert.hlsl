@@ -255,6 +255,56 @@ float3 sampleSpriteSigned(float val, float2 uv, float displayLength, float align
 }
 
 //------------------------------------------------------------------------------------------------------------------------------
+// Heart Rate Emission Functions
+
+/*!
+ * @brief Calculate emission intensity based on heart rate
+ * @param [in] heartRate Current heart rate (BPM)
+ * @param [in] minIntensity Minimum emission intensity (0-100)
+ * @param [in] maxIntensity Maximum emission intensity (0-100)
+ * @return Pulsing emission multiplier
+ */
+float calculateHeartRateEmission(float heartRate, float minIntensity, float maxIntensity)
+{
+    if(heartRate <= 0.0) return minIntensity / 100.0;
+    
+    // Convert BPM to Hz (beats per second)
+    float frequency = heartRate / 60.0;
+    
+    // Use time to create pulsing effect
+    float time = _Time.y;
+    
+    // Create a sawtooth wave pattern based on heart rate frequency
+    float phase = frac(time * frequency); // Get fractional part for 0-1 cycle
+    
+    // Create inverted sawtooth wave: quick rise (0->1), slow fall (1->0)
+    // This mimics a heartbeat pattern better than sine wave
+    float pulse;
+    if(phase < 0.1) // Quick rise phase (10% of cycle)
+    {
+        pulse = phase / 0.1; // Linear rise from 0 to 1
+    }
+    else // Slow fall phase (90% of cycle)
+    {
+        pulse = 1.0 - ((phase - 0.1) / 0.9); // Linear fall from 1 to 0
+    }
+      // Apply exponential decay for more natural heartbeat feeling
+    if(phase >= 0.1)
+    {
+        float fallPhase = (phase - 0.1) / 0.9;
+        pulse = exp(-fallPhase * 3.75); // Exponential decay (25% faster: 3.0 * 1.25 = 3.75)
+    }
+    
+    // Clamp to ensure valid range
+    pulse = saturate(pulse);
+    
+    // Interpolate between min and max intensity
+    float intensity = lerp(minIntensity, maxIntensity, pulse);
+    
+    return intensity / 100.0;
+}
+
+//------------------------------------------------------------------------------------------------------------------------------
 // Decal Heart Rate Functions
 
 /*!
@@ -282,11 +332,19 @@ void lilGetDecalTexture(inout lilFragData fd LIL_SAMP_IN_FUNC(samp))
         #if LIL_RENDER != 0
             // Handle alpha modes if needed for different render modes
         #endif
-          fd.col.rgb = lerp(fd.col.rgb, lilBlendColor(fd.col.rgb, decalColor.rgb, blendAlpha, _DecalTextureBlendMode), decalColor.a);
-          // Add emission
-        if(_DecalTextureEmissionStrength > 0.0)
+          fd.col.rgb = lerp(fd.col.rgb, lilBlendColor(fd.col.rgb, decalColor.rgb, blendAlpha, _DecalTextureBlendMode), decalColor.a);        // Add emission
+        float emissionStrength = _DecalTextureEmissionStrength;
+        
+        // Use heart rate based emission if enabled
+        if(_UseHeartRateEmissionTexture)
         {
-            float3 emissionContribution = decalColor.rgb * (_DecalTextureEmissionStrength / 100.0) * decalColor.a;
+            float heartRateMultiplier = calculateHeartRateEmission(float(_IntHeartRate), _HeartRateEmissionMinTexture, _HeartRateEmissionMaxTexture);
+            emissionStrength = heartRateMultiplier * 100.0;
+        }
+        
+        if(emissionStrength > 0.0)
+        {
+            float3 emissionContribution = decalColor.rgb * (emissionStrength / 100.0) * decalColor.a;
             fd.emissionColor += emissionContribution;
         }
     }
@@ -319,9 +377,18 @@ void lilGetDecalNumber(inout lilFragData fd LIL_SAMP_IN_FUNC(samp))
         #endif
         
         fd.col.rgb = lerp(fd.col.rgb, lilBlendColor(fd.col.rgb, colorNumber.rgb, colorNumber.a, _NumberTextureBlendMode), colorNumber.a);        // Add emission
-        if(_DecalNumberEmissionStrength > 0.0)
+        float emissionStrength = _DecalNumberEmissionStrength;
+        
+        // Use heart rate based emission if enabled
+        if(_UseHeartRateEmission)
         {
-            float3 emissionContribution = colorNumber.rgb * (_DecalNumberEmissionStrength / 100.0) * colorNumber.a;
+            float heartRateMultiplier = calculateHeartRateEmission(float(_IntHeartRate), _HeartRateEmissionMin, _HeartRateEmissionMax);
+            emissionStrength = heartRateMultiplier * 100.0;
+        }
+        
+        if(emissionStrength > 0.0)
+        {
+            float3 emissionContribution = colorNumber.rgb * (emissionStrength / 100.0) * colorNumber.a;
             fd.emissionColor += emissionContribution;
         }
     }

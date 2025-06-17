@@ -22,6 +22,11 @@ _IntHeartRate                         ("HeartRate", Int) = 0
 [lilToggle]     _SyncDecalNumberTextureScale ("Sync Scale", Int) = 0
                 _DecalNumberEmissionStrength ("Emission Strength", Range(0, 100)) = 0
 
+// Heart Rate Emission Control
+[lilToggle]     _UseHeartRateEmission       ("Use HeartRate Emission", Int) = 0
+                _HeartRateEmissionMin       ("Emission Min Intensity", Range(0, 100)) = 0
+                _HeartRateEmissionMax       ("Emission Max Intensity", Range(0, 100)) = 50
+
 // Decal Texture Properties
 [HDR][lilHDR]   _DecalTextureColor          ("Color", Color) = (1,1,1,1)
                 _DecalTexture                ("Texture", 2D) = "white" {}
@@ -34,3 +39,8 @@ _IntHeartRate                         ("HeartRate", Int) = 0
 [lilAngle]      _DecalRotation               ("Decal Rotation", Range(0, 360)) = 0
 [lilToggle]     _SyncDecalTextureScale       ("Sync Scale", Int) = 0
                 _DecalTextureEmissionStrength ("Emission Strength", Range(0, 100)) = 0
+
+// Heart Rate Emission Control (also applies to texture)
+[lilToggle]     _UseHeartRateEmissionTexture ("Use HeartRate Emission", Int) = 0
+                _HeartRateEmissionMinTexture ("Emission Min Intensity", Range(0, 100)) = 0
+                _HeartRateEmissionMaxTexture ("Emission Max Intensity", Range(0, 100)) = 50

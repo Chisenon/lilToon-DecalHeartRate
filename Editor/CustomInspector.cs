@@ -26,10 +26,15 @@ namespace lilToon
         MaterialProperty _NumTexRotation;
         MaterialProperty _NumTexDisplaylength;
         MaterialProperty _NumTexAlignment;        MaterialProperty _NumTexCharacterOffset;
-        MaterialProperty _SyncDecalNumberTextureScale;
-        MaterialProperty _SyncDecalTextureScale;
+        MaterialProperty _SyncDecalNumberTextureScale;        MaterialProperty _SyncDecalTextureScale;
         MaterialProperty _DecalNumberEmissionStrength;
         MaterialProperty _DecalTextureEmissionStrength;
+        MaterialProperty _UseHeartRateEmission;
+        MaterialProperty _HeartRateEmissionMin;
+        MaterialProperty _HeartRateEmissionMax;
+        MaterialProperty _UseHeartRateEmissionTexture;
+        MaterialProperty _HeartRateEmissionMinTexture;
+        MaterialProperty _HeartRateEmissionMaxTexture;
 
         private static bool isShowCustomProperties;
         private const string shaderName = "ChiseNote/DecalHeartRate";
@@ -59,10 +64,15 @@ namespace lilToon
             _NumTexRotation = FindProperty("_NumTexRotation", props);
             _NumTexDisplaylength = FindProperty("_NumTexDisplaylength", props);
             _NumTexAlignment = FindProperty("_NumTexAlignment", props);            _NumTexCharacterOffset = FindProperty("_NumTexCharacterOffset", props);
-            _SyncDecalNumberTextureScale = FindProperty("_SyncDecalNumberTextureScale", props);
-            _SyncDecalTextureScale = FindProperty("_SyncDecalTextureScale", props);
+            _SyncDecalNumberTextureScale = FindProperty("_SyncDecalNumberTextureScale", props);            _SyncDecalTextureScale = FindProperty("_SyncDecalTextureScale", props);
             _DecalNumberEmissionStrength = FindProperty("_DecalNumberEmissionStrength", props);
             _DecalTextureEmissionStrength = FindProperty("_DecalTextureEmissionStrength", props);
+            _UseHeartRateEmission = FindProperty("_UseHeartRateEmission", props);
+            _HeartRateEmissionMin = FindProperty("_HeartRateEmissionMin", props);
+            _HeartRateEmissionMax = FindProperty("_HeartRateEmissionMax", props);
+            _UseHeartRateEmissionTexture = FindProperty("_UseHeartRateEmissionTexture", props);
+            _HeartRateEmissionMinTexture = FindProperty("_HeartRateEmissionMinTexture", props);
+            _HeartRateEmissionMaxTexture = FindProperty("_HeartRateEmissionMaxTexture", props);
         }
 
         protected override void DrawCustomProperties(Material material)
@@ -163,12 +173,19 @@ namespace lilToon
                     m_MaterialEditor.ShaderProperty(_NumTexCharacterOffset, GetLoc("Character Offset"));
                     EditorGUI.indentLevel--;
 
-                    DrawLine();
-
-                    // Emission Settings
+                    DrawLine();                    // Emission Settings
                     EditorGUILayout.LabelField(GetLoc("Emission Settings"), EditorStyles.boldLabel);
                     EditorGUI.indentLevel++;
                     m_MaterialEditor.ShaderProperty(_DecalNumberEmissionStrength, GetLoc("Emission Strength"));
+                    m_MaterialEditor.ShaderProperty(_UseHeartRateEmission, GetLoc("Use HeartRate Emission"));
+                    
+                    if(_UseHeartRateEmission.floatValue == 1)
+                    {
+                        EditorGUI.indentLevel++;
+                        m_MaterialEditor.ShaderProperty(_HeartRateEmissionMin, GetLoc("Min Intensity"));
+                        m_MaterialEditor.ShaderProperty(_HeartRateEmissionMax, GetLoc("Max Intensity"));
+                        EditorGUI.indentLevel--;
+                    }
                     EditorGUI.indentLevel--;
                 }
                 
@@ -248,12 +265,19 @@ namespace lilToon
                     m_MaterialEditor.ShaderProperty(_DecalRotation, GetLoc("Rotation Angle"));
                     EditorGUI.indentLevel--;
 
-                    DrawLine();
-
-                    // Emission Settings
+                    DrawLine();                    // Emission Settings
                     EditorGUILayout.LabelField(GetLoc("Emission Settings"), EditorStyles.boldLabel);
                     EditorGUI.indentLevel++;
                     m_MaterialEditor.ShaderProperty(_DecalTextureEmissionStrength, GetLoc("Emission Strength"));
+                    m_MaterialEditor.ShaderProperty(_UseHeartRateEmissionTexture, GetLoc("Use HeartRate Emission"));
+                    
+                    if(_UseHeartRateEmissionTexture.floatValue == 1)
+                    {
+                        EditorGUI.indentLevel++;
+                        m_MaterialEditor.ShaderProperty(_HeartRateEmissionMinTexture, GetLoc("Min Intensity"));
+                        m_MaterialEditor.ShaderProperty(_HeartRateEmissionMaxTexture, GetLoc("Max Intensity"));
+                        EditorGUI.indentLevel--;
+                    }
                     EditorGUI.indentLevel--;
                 }
 
