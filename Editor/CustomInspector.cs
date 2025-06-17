@@ -31,10 +31,11 @@ namespace lilToon
         MaterialProperty _DecalTextureEmissionStrength;
         MaterialProperty _UseHeartRateEmission;
         MaterialProperty _HeartRateEmissionMin;
-        MaterialProperty _HeartRateEmissionMax;
-        MaterialProperty _UseHeartRateEmissionTexture;
+        MaterialProperty _HeartRateEmissionMax;        MaterialProperty _UseHeartRateEmissionTexture;
         MaterialProperty _HeartRateEmissionMinTexture;
         MaterialProperty _HeartRateEmissionMaxTexture;
+        MaterialProperty _UseHeartRateScaleTexture;
+        MaterialProperty _HeartRateScaleIntensity;
 
         private static bool isShowCustomProperties;
         private const string shaderName = "ChiseNote/DecalHeartRate";
@@ -69,10 +70,10 @@ namespace lilToon
             _DecalTextureEmissionStrength = FindProperty("_DecalTextureEmissionStrength", props);
             _UseHeartRateEmission = FindProperty("_UseHeartRateEmission", props);
             _HeartRateEmissionMin = FindProperty("_HeartRateEmissionMin", props);
-            _HeartRateEmissionMax = FindProperty("_HeartRateEmissionMax", props);
-            _UseHeartRateEmissionTexture = FindProperty("_UseHeartRateEmissionTexture", props);
-            _HeartRateEmissionMinTexture = FindProperty("_HeartRateEmissionMinTexture", props);
-            _HeartRateEmissionMaxTexture = FindProperty("_HeartRateEmissionMaxTexture", props);
+            _HeartRateEmissionMax = FindProperty("_HeartRateEmissionMax", props);            _UseHeartRateEmissionTexture = FindProperty("_UseHeartRateEmissionTexture", props);
+            _HeartRateEmissionMinTexture = FindProperty("_HeartRateEmissionMinTexture", props);            _HeartRateEmissionMaxTexture = FindProperty("_HeartRateEmissionMaxTexture", props);
+            _UseHeartRateScaleTexture = FindProperty("_UseHeartRateScaleTexture", props);
+            _HeartRateScaleIntensity = FindProperty("_HeartRateScaleIntensity", props);
         }
 
         protected override void DrawCustomProperties(Material material)
@@ -104,7 +105,8 @@ namespace lilToon
                 EditorGUILayout.BeginVertical(boxInnerHalf);
 
                 if(_ActiveDecalNumber.floatValue == 1)
-                {                     // Texture Settings
+                {
+                    // Texture Settings
                     EditorGUILayout.LabelField(GetLoc("Texture Settings"), EditorStyles.boldLabel);
                     EditorGUI.indentLevel++;
                     m_MaterialEditor.TexturePropertySingleLine(new GUIContent(GetLoc("Number Texture")), _SpriteNumberTexture, _SpriteNumberTextureColor);
@@ -270,12 +272,22 @@ namespace lilToon
                     EditorGUI.indentLevel++;
                     m_MaterialEditor.ShaderProperty(_DecalTextureEmissionStrength, GetLoc("Emission Strength"));
                     m_MaterialEditor.ShaderProperty(_UseHeartRateEmissionTexture, GetLoc("Use HeartRate Emission"));
-                    
-                    if(_UseHeartRateEmissionTexture.floatValue == 1)
+                      if(_UseHeartRateEmissionTexture.floatValue == 1)
                     {
                         EditorGUI.indentLevel++;
                         m_MaterialEditor.ShaderProperty(_HeartRateEmissionMinTexture, GetLoc("Min Intensity"));
                         m_MaterialEditor.ShaderProperty(_HeartRateEmissionMaxTexture, GetLoc("Max Intensity"));
+                        EditorGUI.indentLevel--;
+                    }
+                    
+                    DrawLine();
+                    
+                    // HeartRate Scale Settings
+                    m_MaterialEditor.ShaderProperty(_UseHeartRateScaleTexture, GetLoc("Use HeartRate Scale"));                    if(_UseHeartRateScaleTexture.floatValue == 1)
+                    {
+                        EditorGUI.indentLevel++;
+                        m_MaterialEditor.ShaderProperty(_HeartRateScaleIntensity, GetLoc("Scale Intensity"));
+                        EditorGUILayout.HelpBox("Decal texture will pulse based on heart rate using damped oscillation.", MessageType.Info);
                         EditorGUI.indentLevel--;
                     }
                     EditorGUI.indentLevel--;

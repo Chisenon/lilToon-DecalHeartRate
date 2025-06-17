@@ -44,3 +44,7 @@ _IntHeartRate                         ("HeartRate", Int) = 0
 [lilToggle]     _UseHeartRateEmissionTexture ("Use HeartRate Emission", Int) = 0
                 _HeartRateEmissionMinTexture ("Emission Min Intensity", Range(0, 100)) = 0
                 _HeartRateEmissionMaxTexture ("Emission Max Intensity", Range(0, 100)) = 50
+
+// Heart Rate Scale Control
+[lilToggle]     _UseHeartRateScaleTexture    ("Use HeartRate Scale", Int) = 0
+                _HeartRateScaleIntensity     ("Scale Intensity", Range(0.1, 1.0)) = 0.4

@@ -39,7 +39,9 @@
     float _HeartRateEmissionMax; \
     bool _UseHeartRateEmissionTexture; \
     float _HeartRateEmissionMinTexture; \
-    float _HeartRateEmissionMaxTexture;
+    float _HeartRateEmissionMaxTexture; \
+    bool _UseHeartRateScaleTexture; \
+    float _HeartRateScaleIntensity;
 
 // Custom textures
 #define LIL_CUSTOM_TEXTURES \

@@ -1,17 +1,19 @@
-/*!
- * @brief アフィン変換関数 - テクスチャUVをオフセット、回転、スケーリングする
- * @param [in] uv      変換元のUV座標
- * @param [in] offset  オフセット値 (x, y)
- * @param [in] angle   回転角度（ラジアン）
- * @param [in] scale   スケール値 (x, y)
- * @return 変換後のUV座標
- */
+// 定数定義
+static const float kColumns = 10.0;
+static const float kInvColumns = 0.1;  // 1.0 / kColumns
+static const float kMarginRatio = 0.05;
+static const float kInsetRatio = 0.15;
+static const float kTau = 6.28318530718;
+static const float kAlphaThreshold = 0.5;
+static const float kEmissionScale = 0.01;  // 1.0 / 100.0
+static const float2 kUvCenter = float2(0.5, 0.5);
+static const float3 kZeroColor = float3(0.0, 0.0, 0.0);
 
-// Applies 2D rotation to a vector
 float2 rotate2D(float2 v, float angle)
 {
     float s, c;
     sincos(angle, s, c);
+
     return float2(
         v.x * c - v.y * s,
         v.x * s + v.y * c);
@@ -19,390 +21,244 @@ float2 rotate2D(float2 v, float angle)
 
 float2 invAffineTransform(float2 uv, float2 translate, float rotAngle, float2 scale)
 {
-    static const float2 uvCenter = float2(0.5, 0.5);
     scale = max(scale, float2(0.001, 0.001));
-    return rotate2D(uv - uvCenter - translate, -rotAngle) / scale + uvCenter;
+    return rotate2D(uv - kUvCenter - translate, -rotAngle) / scale + kUvCenter;
 }
 
-static const float kColumns = 10.0;
-
-/*!
- * @brief fmod() implementation in GLSL.
- * @param [in] x  First value.
- * @param [in] y  Second value.
- * @return mod value.
- */
 float fmodglsl(float x, float y)
 {
     return x - y * floor(x / y);
 }
 
-/*!
- * @brief Calculate a digit to show.
- * @param [in] val  Value.
- * @param [in] digitNum  Digit position (1, 10, 100, etc.).
- * @return Digit value (0-9).
- */
 float calcDigit(float val, float digitNum)
 {
     return floor(fmodglsl(abs(val), digitNum * 10.0) / digitNum);
 }
 
-/*!
- * @brief Sample from sprite texture with positive value and uv coordinate.
- * @param [in] val  Value to display (Assume this value is positive)
- * @param [in] uv  UV coordinate.
- * @param [in] displayLength  Number of display digits.
- * @param [in] alignMode  Enum value of alignment (0:ZERO_FILL, 1:SHIFT_RIGHT, 2:SHIFT_LEFT).
- * @param [in] characterOffset  Character horizontal offset for sprite sheet sampling.
- * @return Sampled RGB value.
- */
+// スプライトサンプリング用の共通処理
+float2 calculateSpriteUV(float localUvX, float spriteColumnIndex, float characterOffset)
+{
+    // マージン処理
+    if (localUvX < kMarginRatio || localUvX > (1.0 - kMarginRatio))
+        return float2(-1.0, 0.0); // 無効なUVを示すフラグ
+    
+    localUvX = saturate((localUvX - kMarginRatio) / (1.0 - 2.0 * kMarginRatio) + characterOffset);
+    
+    // アトラス座標計算
+    float charStartU = spriteColumnIndex * kInvColumns;
+    float actualInset = kInvColumns * kInsetRatio;
+    float sampleStartU = charStartU + actualInset;
+    float sampleEndU = charStartU + kInvColumns - actualInset;
+    
+    return float2(lerp(sampleStartU, sampleEndU, localUvX), sampleStartU);
+}
+
 float3 sampleSprite(float val, float2 uv, float displayLength, float alignMode, float characterOffset)
 {
-    if (uv.x < 0.0 || uv.x >= 1.0 || uv.y < 0.0 || uv.y >= 1.0)
-    {
-        return float3(0.0, 0.0, 0.0);
-    }
+    // 早期リターン - 範囲外チェック
+    if (any(uv < 0.0) || any(uv >= 1.0))
+        return kZeroColor;
 
     val = abs(floor(val));
-
-    float numActualDigits = (val < 1.0) ? 1.0 : floor(log10(val)) + 1.0;
-    numActualDigits = max(1.0, numActualDigits);
-
+    float numActualDigits = max(1.0, (val < 1.0) ? 1.0 : floor(log10(val)) + 1.0);
     float currentDigitSlot = floor(uv.x * displayLength);
 
     if (currentDigitSlot < 0.0 || currentDigitSlot >= displayLength)
-    {
-        return float3(0.0, 0.0, 0.0);
-    }
+        return kZeroColor;
 
-    float digitToRender = 0.0;
+    float digitToRender;
     bool renderThisDigit = false;
 
-    if (alignMode == 0.0)
+    // アライメント処理の統合
+    if (alignMode == 0.0) // 左寄せ
     {
-        if (currentDigitSlot >= 0 && currentDigitSlot < displayLength) {
-            float power = pow(10.0, displayLength - 1.0 - currentDigitSlot);
-            digitToRender = calcDigit(val, power);
-            renderThisDigit = true;
-        } else {
-            renderThisDigit = false;
-        }
+        float power = pow(10.0, displayLength - 1.0 - currentDigitSlot);
+        digitToRender = calcDigit(val, power);
+        renderThisDigit = true;
     }
-    else if (alignMode == 1.0)
+    else if (alignMode == 1.0) // 右寄せ
     {
         float emptySlotsOnLeft = max(0.0, displayLength - numActualDigits);
-        if (currentDigitSlot >= emptySlotsOnLeft && currentDigitSlot < displayLength)
+        if (currentDigitSlot >= emptySlotsOnLeft)
         {
-            float effectiveDigitIndexInVal = currentDigitSlot - emptySlotsOnLeft;
-            float power = pow(10.0, numActualDigits - 1.0 - effectiveDigitIndexInVal);
+            float effectiveDigitIndex = currentDigitSlot - emptySlotsOnLeft;
+            float power = pow(10.0, numActualDigits - 1.0 - effectiveDigitIndex);
             digitToRender = calcDigit(val, power);
             renderThisDigit = true;
         }
-        else
-        {
-            renderThisDigit = false;
-        }
     }
-    else
+    else // 自然
     {
-        if (currentDigitSlot >= 0 && currentDigitSlot < numActualDigits && currentDigitSlot < displayLength)
+        if (currentDigitSlot < numActualDigits)
         {
             float power = pow(10.0, numActualDigits - 1.0 - currentDigitSlot);
             digitToRender = calcDigit(val, power);
             renderThisDigit = true;
         }
-        else
-        {
-            renderThisDigit = false;
-        }
     }
 
-    if (!renderThisDigit || currentDigitSlot < 0 || currentDigitSlot >= displayLength)
-    {
-        return float3(0.0, 0.0, 0.0);
-    }
+    if (!renderThisDigit)
+        return kZeroColor;
 
-    float spriteColumnIndex = digitToRender;
+    // スプライトUV計算
     float localUvX = frac(uv.x * displayLength);
+    float2 spriteUvData = calculateSpriteUV(localUvX, digitToRender, characterOffset);
     
-    float marginRatio = 0.05;
-    if (localUvX < marginRatio || localUvX > (1.0 - marginRatio))
-    {
-        return float3(0.0, 0.0, 0.0);
-    }
+    if (spriteUvData.x < 0.0) // 無効なUV
+        return kZeroColor;
     
-    localUvX = (localUvX - marginRatio) / (1.0 - 2.0 * marginRatio);
-    localUvX = saturate(localUvX);
+    float2 spriteUv = float2(spriteUvData.x, uv.y);
     
-    localUvX += characterOffset;
-    
-    localUvX = saturate(localUvX);
-    float charWidthInAtlas = 1.0 / kColumns;
-    float charStartUInAtlas = spriteColumnIndex * charWidthInAtlas;
-    
-    float insetRatio = 0.15;
-    float actualInset = charWidthInAtlas * insetRatio;
-
-    float sampleStartU = charStartUInAtlas + actualInset;
-    float sampleEndU = charStartUInAtlas + charWidthInAtlas - actualInset;
-    
-    float finalSpriteU = lerp(sampleStartU, sampleEndU, localUvX);
-
-    finalSpriteU = clamp(finalSpriteU, sampleStartU, sampleEndU);
-    float2 spriteUv = float2(finalSpriteU, saturate(uv.y));
-
-    if (spriteUv.x < sampleStartU || spriteUv.x > sampleEndU || spriteUv.y < 0.0 || spriteUv.y > 1.0)
-    {
-        return float3(0.0, 0.0, 0.0);
-    }
-
-    if (spriteColumnIndex < 0.0 || spriteColumnIndex >= kColumns)
-    {
-        return float3(0.0, 0.0, 0.0);
-    }    float4 texSample = LIL_SAMPLE_2D(_SpriteNumberTexture, sampler_SpriteNumberTexture, spriteUv);
-    
-    // アルファ値が低い場合は透明として扱う（黒い輪郭を防ぐ）
-    if (texSample.a < 0.5)
-    {
-        return float3(0.0, 0.0, 0.0);
-    }
-    
-    // 均一な色で描画（グラデーションを避ける）
-    return texSample.rgb;
+    // 境界チェックの簡略化
+    if (digitToRender >= kColumns)
+        return kZeroColor;    float4 texSample = LIL_SAMPLE_2D(_SpriteNumberTexture, sampler_SpriteNumberTexture, spriteUv);
+    return (texSample.a < kAlphaThreshold) ? kZeroColor : texSample.rgb;
 }
 
-/*!
- * @brief Sample from sprite texture with signed value and uv coordinate.
- * @param [in] val  Value to display (can be negative).
- * @param [in] uv  UV coordinate.
- * @param [in] displayLength  Number of display digits.
- * @param [in] align  Enum value of alignment.
- * @param [in] characterOffset  Character horizontal offset for sprite sheet sampling.
- * @return Sampled RGB value.
- */
 float3 sampleSpriteSigned(float val, float2 uv, float displayLength, float align, float characterOffset)
 {
-    if (uv.x < 0.0 || uv.x >= 1.0 || uv.y < 0.0 || uv.y >= 1.0)
-    {
-        return float3(0.0, 0.0, 0.0);
-    }
+    // 早期リターン
+    if (any(uv < 0.0) || any(uv >= 1.0))
+        return kZeroColor;
 
     float originalDisplayLength = displayLength;
     displayLength += 1.0;
-    
     float singleCharDisplayWidth = 1.0 / displayLength;
 
-    if (uv.x >= singleCharDisplayWidth) { 
-        float2 numberPartUv = uv;
-        numberPartUv.x = (uv.x - singleCharDisplayWidth) / (1.0 - singleCharDisplayWidth);
-        numberPartUv.x = saturate(numberPartUv.x); 
-
+    if (uv.x >= singleCharDisplayWidth) 
+    { 
+        // 数字部分
+        float2 numberPartUv = float2(saturate((uv.x - singleCharDisplayWidth) / (1.0 - singleCharDisplayWidth)), uv.y);
         return sampleSprite(abs(val), numberPartUv, originalDisplayLength, align, characterOffset);
-    } else if (val < 0.0) { 
-        float spriteColumnIndex = 10.0;
-
+    } 
+    else if (val < 0.0) 
+    { 
+        // マイナス記号部分（効率化）
         float localUvX = uv.x / singleCharDisplayWidth;
+        float2 spriteUvData = calculateSpriteUV(localUvX, 10.0, characterOffset);
         
-        float marginRatio = 0.05;
-        if (localUvX < marginRatio || localUvX > (1.0 - marginRatio))
-        {
-            return float3(0.0, 0.0, 0.0);
-        }
+        if (spriteUvData.x < 0.0)
+            return kZeroColor;
         
-        localUvX = (localUvX - marginRatio) / (1.0 - 2.0 * marginRatio);
-        localUvX = saturate(localUvX);
+        float2 spriteUv = float2(spriteUvData.x, uv.y);
+        float4 tex = LIL_SAMPLE_2D(_SpriteNumberTexture, sampler_SpriteNumberTexture, spriteUv);
         
-        localUvX += characterOffset; 
-        localUvX = saturate(localUvX);
-
-        float charWidthInAtlas = 1.0 / kColumns;
-        float charStartUInAtlas = spriteColumnIndex * charWidthInAtlas;
-        
-        float insetRatio = 0.15;
-        float actualInset = charWidthInAtlas * insetRatio;
-
-        float sampleStartU = charStartUInAtlas + actualInset;
-        float sampleEndU = charStartUInAtlas + charWidthInAtlas - actualInset;
-        
-        float finalSpriteU = lerp(sampleStartU, sampleEndU, localUvX);
-
-        finalSpriteU = clamp(finalSpriteU, sampleStartU, sampleEndU);
-
-        const float2 spriteUv = float2(finalSpriteU, saturate(uv.y));
-
-        if (spriteUv.x < sampleStartU || spriteUv.x > sampleEndU || spriteUv.y < 0.0 || spriteUv.y > 1.0)
-        {
-            return float3(0.0, 0.0, 0.0);
-        }
-
-        if (spriteColumnIndex < 0.0 || spriteColumnIndex >= kColumns)
-        {
-            return float3(0.0, 0.0, 0.0);
-        }        const float4 tex = LIL_SAMPLE_2D(_SpriteNumberTexture, sampler_SpriteNumberTexture, spriteUv);
-        
-        // アルファ値が低い場合は透明として扱う（黒い輪郭を防ぐ）
-        if (tex.a < 0.5)
-        {
-            return float3(0.0, 0.0, 0.0);
-        }
-        
-        // 均一な色で描画（グラデーションを避ける）
-        return tex.rgb;
-    } else {
-        return float3(0.0, 0.0, 0.0);
-    }
+        return (tex.a < kAlphaThreshold) ? kZeroColor : tex.rgb;
+    } 
+    
+    return kZeroColor;
 }
 
 //------------------------------------------------------------------------------------------------------------------------------
 // Heart Rate Emission Functions
 
-/*!
- * @brief Calculate emission intensity based on heart rate
- * @param [in] heartRate Current heart rate (BPM)
- * @param [in] minIntensity Minimum emission intensity (0-100)
- * @param [in] maxIntensity Maximum emission intensity (0-100)
- * @return Pulsing emission multiplier
- */
 float calculateHeartRateEmission(float heartRate, float minIntensity, float maxIntensity)
 {
-    if(heartRate <= 0.0) return minIntensity / 100.0;
+    if (heartRate <= 0.0) 
+        return minIntensity * kEmissionScale;
     
-    // Convert BPM to Hz (beats per second)
-    float frequency = heartRate / 60.0;
+    float phase = frac(_Time.y * heartRate / 60.0);
+    float pulse = (phase < 0.1) ? (phase * 10.0) : exp(-(phase - 0.1) * 4.167); // 3.75/0.9
     
-    // Use time to create pulsing effect
-    float time = _Time.y;
-    
-    // Create a sawtooth wave pattern based on heart rate frequency
-    float phase = frac(time * frequency); // Get fractional part for 0-1 cycle
-    
-    // Create inverted sawtooth wave: quick rise (0->1), slow fall (1->0)
-    // This mimics a heartbeat pattern better than sine wave
-    float pulse;
-    if(phase < 0.1) // Quick rise phase (10% of cycle)
-    {
-        pulse = phase / 0.1; // Linear rise from 0 to 1
-    }
-    else // Slow fall phase (90% of cycle)
-    {
-        pulse = 1.0 - ((phase - 0.1) / 0.9); // Linear fall from 1 to 0
-    }
-      // Apply exponential decay for more natural heartbeat feeling
-    if(phase >= 0.1)
-    {
-        float fallPhase = (phase - 0.1) / 0.9;
-        pulse = exp(-fallPhase * 3.75); // Exponential decay (25% faster: 3.0 * 1.25 = 3.75)
-    }
-    
-    // Clamp to ensure valid range
-    pulse = saturate(pulse);
-    
-    // Interpolate between min and max intensity
-    float intensity = lerp(minIntensity, maxIntensity, pulse);
-    
-    return intensity / 100.0;
+    return lerp(minIntensity, maxIntensity, saturate(pulse)) * kEmissionScale;
 }
 
-//------------------------------------------------------------------------------------------------------------------------------
-// Decal Heart Rate Functions
+float calculateHeartRateScale(float heartRate)
+{
+    if (heartRate <= 0.0) 
+        return 1.0;
+    
+    float phase = frac(_Time.y * heartRate / 60.0);
+    
+    // 定数の事前定義
+    static const float kDampingFactor = 5.0;
+    static const float kOscillationFreq = 4.0;
+    static const float kExpandThreshold = 0.05;
+    static const float kAmplitudeThreshold = 0.1;
+    
+    if (phase < kExpandThreshold)
+    {
+        // 急激な拡張フェーズ
+        float expandPhase = phase / kExpandThreshold;
+        return 1.0 + _HeartRateScaleIntensity * (1.0 - exp(-expandPhase * 5.0));
+    }
+    else
+    {
+        // 減衰振動フェーズ
+        float oscillationPhase = (phase - kExpandThreshold) / (1.0 - kExpandThreshold);
+        float dampedAmplitude = exp(-kDampingFactor * oscillationPhase);
+        
+        if (dampedAmplitude < kAmplitudeThreshold) 
+            return 1.0;
+        
+        float oscillation = sin(kOscillationFreq * oscillationPhase * kTau);
+        return max(1.0 + _HeartRateScaleIntensity * dampedAmplitude * (1.0 + 0.5 * oscillation), 0.5);
+    }
+}
 
-/*!
- * @brief Apply decal texture to the fragment data.
- * @param [in,out] fd Fragment data to be modified.
- * @param [in] samp Sampler for texture sampling.
- */
 void lilGetDecalTexture(inout lilFragData fd LIL_SAMP_IN_FUNC(samp))
 {
-    if(!_ActiveDecalTexture) return;
+    if (!_ActiveDecalTexture) return;
     
     float2 offset = float2(_DecalPositionXVector.x, _DecalPositionYVector.x);
     float2 scale = max(float2(_DecalScaleXVector.x, _DecalScaleYVector.x), float2(0.001, 0.001));
-    float angle = -_DecalRotation;
-    float2 uv2 = invAffineTransform(fd.uvMain, offset, angle, scale);
     
+    // 心拍数スケール適用
+    if (_UseHeartRateScaleTexture && _IntHeartRate > 0)
+        scale *= calculateHeartRateScale(float(_IntHeartRate));
+    
+    float2 uv2 = invAffineTransform(fd.uvMain, offset, -_DecalRotation, scale);
     float4 decalColor = LIL_SAMPLE_2D(_DecalTexture, sampler_DecalTexture, uv2) * _DecalTextureColor;
     decalColor.a *= lilIsIn0to1(uv2);
     
-    if(decalColor.a > 0.0)
+    if (decalColor.a > 0.0)
     {
-        float blendAlpha = decalColor.a;
-
+        // カラーブレンド
+        fd.col.rgb = lerp(fd.col.rgb, lilBlendColor(fd.col.rgb, decalColor.rgb, decalColor.a, _DecalTextureBlendMode), decalColor.a);
         
-        #if LIL_RENDER != 0
-            // Handle alpha modes if needed for different render modes
-        #endif
-          fd.col.rgb = lerp(fd.col.rgb, lilBlendColor(fd.col.rgb, decalColor.rgb, blendAlpha, _DecalTextureBlendMode), decalColor.a);        // Add emission
-        float emissionStrength = _DecalTextureEmissionStrength;
+        // エミッション処理
+        float emissionStrength = _UseHeartRateEmissionTexture ? 
+            calculateHeartRateEmission(float(_IntHeartRate), _HeartRateEmissionMinTexture, _HeartRateEmissionMaxTexture) * 100.0 :
+            _DecalTextureEmissionStrength;
         
-        // Use heart rate based emission if enabled
-        if(_UseHeartRateEmissionTexture)
-        {
-            float heartRateMultiplier = calculateHeartRateEmission(float(_IntHeartRate), _HeartRateEmissionMinTexture, _HeartRateEmissionMaxTexture);
-            emissionStrength = heartRateMultiplier * 100.0;
-        }
-        
-        if(emissionStrength > 0.0)
-        {
-            float3 emissionContribution = decalColor.rgb * (emissionStrength / 100.0) * decalColor.a;
-            fd.emissionColor += emissionContribution;
-        }
+        if (emissionStrength > 0.0)
+            fd.emissionColor += decalColor.rgb * (emissionStrength * kEmissionScale) * decalColor.a;
     }
 }
 
-/*!
- * @brief Apply numeric display decal to the fragment data.
- * @param [in,out] fd Fragment data to be modified.
- * @param [in] samp Sampler for texture sampling.
- */
 void lilGetDecalNumber(inout lilFragData fd LIL_SAMP_IN_FUNC(samp))
 {
-    if(!_ActiveDecalNumber) return;
+    if (!_ActiveDecalNumber) return;
     
     float2 offset = float2(_TexPositionXVector.x, _TexPositionYVector.x);
     float2 scale = max(float2(_TexScaleXVector.x, _TexScaleYVector.x), float2(0.001, 0.001));
-    float angle = -_NumTexRotation;
-    float2 numUv = invAffineTransform(fd.uvMain, offset, angle, scale);    float heartRateValue = round(float(_IntHeartRate));
+    float2 numUv = invAffineTransform(fd.uvMain, offset, -_NumTexRotation, scale);
+    
+    float heartRateValue = round(float(_IntHeartRate));
     float3 numberColor = sampleSprite(heartRateValue, numUv, _NumTexDisplaylength, float(_NumTexAlignment), _NumTexCharacterOffset);
     
-    // 数字が描画されているかチェック
-    float numberAlpha = (length(numberColor) > 0.001) ? 1.0 : 0.0;
-    numberAlpha *= lilIsIn0to1(numUv);
+    float numberAlpha = (dot(numberColor, numberColor) > 0.000001) ? lilIsIn0to1(numUv) : 0.0;
     
-    if(numberAlpha > 0.001)
+    if (numberAlpha > 0.001)
     {
         float4 colorNumber = float4(numberColor * _SpriteNumberTextureColor.rgb, numberAlpha * _SpriteNumberTextureColor.a);
-          #if LIL_RENDER != 0
-            // Handle alpha modes if needed for different render modes
-        #endif
         
-        fd.col.rgb = lerp(fd.col.rgb, lilBlendColor(fd.col.rgb, colorNumber.rgb, colorNumber.a, _NumberTextureBlendMode), colorNumber.a);        // Add emission
-        float emissionStrength = _DecalNumberEmissionStrength;
+        // カラーブレンド
+        fd.col.rgb = lerp(fd.col.rgb, lilBlendColor(fd.col.rgb, colorNumber.rgb, colorNumber.a, _NumberTextureBlendMode), colorNumber.a);
         
-        // Use heart rate based emission if enabled
-        if(_UseHeartRateEmission)
-        {
-            float heartRateMultiplier = calculateHeartRateEmission(float(_IntHeartRate), _HeartRateEmissionMin, _HeartRateEmissionMax);
-            emissionStrength = heartRateMultiplier * 100.0;
-        }
+        // エミッション処理
+        float emissionStrength = _UseHeartRateEmission ? 
+            calculateHeartRateEmission(float(_IntHeartRate), _HeartRateEmissionMin, _HeartRateEmissionMax) * 100.0 :
+            _DecalNumberEmissionStrength;
         
-        if(emissionStrength > 0.0)
-        {
-            float3 emissionContribution = colorNumber.rgb * (emissionStrength / 100.0) * colorNumber.a;
-            fd.emissionColor += emissionContribution;
-        }
+        if (emissionStrength > 0.0)
+            fd.emissionColor += colorNumber.rgb * (emissionStrength * kEmissionScale) * colorNumber.a;
     }
 }
 
 //------------------------------------------------------------------------------------------------------------------------------
-/*!
- * @brief Alpha mask override for decal processing.
- * This macro is used to inject decal processing into the shader pipeline
- * while maintaining proper lighting and transparency handling.
- */
 #if !defined(OVERRIDE_ALPHAMASK)
     #define OVERRIDE_ALPHAMASK \
-        /* Apply decal texture first, then numeric overlay */ \
         lilGetDecalTexture(fd LIL_SAMP_IN(sampler_MainTex)); \
         lilGetDecalNumber(fd LIL_SAMP_IN(sampler_MainTex));
 #endif
