@@ -31,7 +31,9 @@
     float4 _DecalScaleXVector; \
     float4 _DecalScaleYVector; \
     float _DecalRotation; \
-    int _IntHeartRate;
+    int _IntHeartRate; \
+    float _DecalNumberEmissionStrength; \
+    float _DecalTextureEmissionStrength;
 
 // Custom textures
 #define LIL_CUSTOM_TEXTURES \

@@ -18,9 +18,9 @@ _IntHeartRate                         ("HeartRate", Int) = 0
 [lilAngle]      _NumTexRotation             ("Number Texture Rotation", Range(-1,1)) = 0
 [IntRange]      _NumTexDisplaylength        ("Display Length", Range(1, 6)) = 3
 [Enum(ZERO FILL, 0, SHIFT RIGHT, 1, SHIFT LEFT, 2)]
-                _NumTexAlignment            ("Align of Elapsed Time", Int) = 0
-                _NumTexCharacterOffset      ("Character Offset", Range(-1.0, 1.0)) = 0.0
+                _NumTexAlignment            ("Align of Elapsed Time", Int) = 0                _NumTexCharacterOffset      ("Character Offset", Range(-1.0, 1.0)) = 0.0
 [lilToggle]     _SyncDecalNumberTextureScale ("Sync Scale", Int) = 0
+                _DecalNumberEmissionStrength ("Emission Strength", Range(0, 100)) = 0
 
 // Decal Texture Properties
 [HDR][lilHDR]   _DecalTextureColor          ("Color", Color) = (1,1,1,1)
@@ -33,3 +33,4 @@ _IntHeartRate                         ("HeartRate", Int) = 0
 [lilVec4]       _DecalScaleYVector           ("Decal Scale Y", Vector) = (0.5, 0.5, 0.5, 0.5)
 [lilAngle]      _DecalRotation               ("Decal Rotation", Range(0, 360)) = 0
 [lilToggle]     _SyncDecalTextureScale       ("Sync Scale", Int) = 0
+                _DecalTextureEmissionStrength ("Emission Strength", Range(0, 100)) = 0

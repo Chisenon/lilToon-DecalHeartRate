@@ -160,14 +160,16 @@ float3 sampleSprite(float val, float2 uv, float displayLength, float alignMode, 
     if (spriteColumnIndex < 0.0 || spriteColumnIndex >= kColumns)
     {
         return float3(0.0, 0.0, 0.0);
-    }
-
-    float4 texSample = LIL_SAMPLE_2D(_SpriteNumberTexture, sampler_SpriteNumberTexture, spriteUv);
+    }    float4 texSample = LIL_SAMPLE_2D(_SpriteNumberTexture, sampler_SpriteNumberTexture, spriteUv);
     
-    float alphaFromTex = 2.0 - 2.0 * texSample.a;
-    float finalPixelAlpha = saturate((1.0 - alphaFromTex) / fwidth(alphaFromTex));
-
-    return texSample.rgb * finalPixelAlpha;
+    // アルファ値が低い場合は透明として扱う（黒い輪郭を防ぐ）
+    if (texSample.a < 0.5)
+    {
+        return float3(0.0, 0.0, 0.0);
+    }
+    
+    // 均一な色で描画（グラデーションを避ける）
+    return texSample.rgb;
 }
 
 /*!
@@ -237,13 +239,16 @@ float3 sampleSpriteSigned(float val, float2 uv, float displayLength, float align
         if (spriteColumnIndex < 0.0 || spriteColumnIndex >= kColumns)
         {
             return float3(0.0, 0.0, 0.0);
-        }
-
-        const float4 tex = LIL_SAMPLE_2D(_SpriteNumberTexture, sampler_SpriteNumberTexture, spriteUv);
+        }        const float4 tex = LIL_SAMPLE_2D(_SpriteNumberTexture, sampler_SpriteNumberTexture, spriteUv);
         
-        const float alphaFromTex = 2.0 - 2.0 * tex.a;
-        const float colAlpha = saturate((1.0 - alphaFromTex) / fwidth(alphaFromTex));
-        return tex.rgb * colAlpha;
+        // アルファ値が低い場合は透明として扱う（黒い輪郭を防ぐ）
+        if (tex.a < 0.5)
+        {
+            return float3(0.0, 0.0, 0.0);
+        }
+        
+        // 均一な色で描画（グラデーションを避ける）
+        return tex.rgb;
     } else {
         return float3(0.0, 0.0, 0.0);
     }
@@ -272,12 +277,18 @@ void lilGetDecalTexture(inout lilFragData fd LIL_SAMP_IN_FUNC(samp))
     if(decalColor.a > 0.0)
     {
         float blendAlpha = decalColor.a;
+
         
         #if LIL_RENDER != 0
             // Handle alpha modes if needed for different render modes
         #endif
-        
-        fd.col.rgb = lerp(fd.col.rgb, lilBlendColor(fd.col.rgb, decalColor.rgb, blendAlpha, _DecalTextureBlendMode), decalColor.a);
+          fd.col.rgb = lerp(fd.col.rgb, lilBlendColor(fd.col.rgb, decalColor.rgb, blendAlpha, _DecalTextureBlendMode), decalColor.a);
+          // Add emission
+        if(_DecalTextureEmissionStrength > 0.0)
+        {
+            float3 emissionContribution = decalColor.rgb * (_DecalTextureEmissionStrength / 100.0) * decalColor.a;
+            fd.emissionColor += emissionContribution;
+        }
     }
 }
 
@@ -293,22 +304,26 @@ void lilGetDecalNumber(inout lilFragData fd LIL_SAMP_IN_FUNC(samp))
     float2 offset = float2(_TexPositionXVector.x, _TexPositionYVector.x);
     float2 scale = max(float2(_TexScaleXVector.x, _TexScaleYVector.x), float2(0.001, 0.001));
     float angle = -_NumTexRotation;
-    float2 numUv = invAffineTransform(fd.uvMain, offset, angle, scale);
-    
-    float heartRateValue = round(float(_IntHeartRate));
+    float2 numUv = invAffineTransform(fd.uvMain, offset, angle, scale);    float heartRateValue = round(float(_IntHeartRate));
     float3 numberColor = sampleSprite(heartRateValue, numUv, _NumTexDisplaylength, float(_NumTexAlignment), _NumTexCharacterOffset);
-    float numberAlpha = length(numberColor) > 0.01 ? 1.0 : 0.0;
+    
+    // 数字が描画されているかチェック
+    float numberAlpha = (length(numberColor) > 0.001) ? 1.0 : 0.0;
     numberAlpha *= lilIsIn0to1(numUv);
     
-    if(numberAlpha > 0.0)
+    if(numberAlpha > 0.001)
     {
         float4 colorNumber = float4(numberColor * _SpriteNumberTextureColor.rgb, numberAlpha * _SpriteNumberTextureColor.a);
-        float blendAlpha = colorNumber.a;
-            #if LIL_RENDER != 0
+          #if LIL_RENDER != 0
             // Handle alpha modes if needed for different render modes
         #endif
         
-        fd.col.rgb = lerp(fd.col.rgb, lilBlendColor(fd.col.rgb, colorNumber.rgb, blendAlpha, _NumberTextureBlendMode), colorNumber.a);
+        fd.col.rgb = lerp(fd.col.rgb, lilBlendColor(fd.col.rgb, colorNumber.rgb, colorNumber.a, _NumberTextureBlendMode), colorNumber.a);        // Add emission
+        if(_DecalNumberEmissionStrength > 0.0)
+        {
+            float3 emissionContribution = colorNumber.rgb * (_DecalNumberEmissionStrength / 100.0) * colorNumber.a;
+            fd.emissionColor += emissionContribution;
+        }
     }
 }
 

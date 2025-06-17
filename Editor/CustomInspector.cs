@@ -25,10 +25,11 @@ namespace lilToon
         MaterialProperty _TexScaleYVector;
         MaterialProperty _NumTexRotation;
         MaterialProperty _NumTexDisplaylength;
-        MaterialProperty _NumTexAlignment;
-        MaterialProperty _NumTexCharacterOffset;
+        MaterialProperty _NumTexAlignment;        MaterialProperty _NumTexCharacterOffset;
         MaterialProperty _SyncDecalNumberTextureScale;
         MaterialProperty _SyncDecalTextureScale;
+        MaterialProperty _DecalNumberEmissionStrength;
+        MaterialProperty _DecalTextureEmissionStrength;
 
         private static bool isShowCustomProperties;
         private const string shaderName = "ChiseNote/DecalHeartRate";
@@ -57,10 +58,11 @@ namespace lilToon
             _TexScaleYVector = FindProperty("_TexScaleYVector", props);
             _NumTexRotation = FindProperty("_NumTexRotation", props);
             _NumTexDisplaylength = FindProperty("_NumTexDisplaylength", props);
-            _NumTexAlignment = FindProperty("_NumTexAlignment", props);
-            _NumTexCharacterOffset = FindProperty("_NumTexCharacterOffset", props);
+            _NumTexAlignment = FindProperty("_NumTexAlignment", props);            _NumTexCharacterOffset = FindProperty("_NumTexCharacterOffset", props);
             _SyncDecalNumberTextureScale = FindProperty("_SyncDecalNumberTextureScale", props);
             _SyncDecalTextureScale = FindProperty("_SyncDecalTextureScale", props);
+            _DecalNumberEmissionStrength = FindProperty("_DecalNumberEmissionStrength", props);
+            _DecalTextureEmissionStrength = FindProperty("_DecalTextureEmissionStrength", props);
         }
 
         protected override void DrawCustomProperties(Material material)
@@ -152,15 +154,21 @@ namespace lilToon
                     }
                     EditorGUI.indentLevel--;
 
-                    DrawLine();
-
-                    // Rotation & Display Settings
+                    DrawLine();                    // Rotation & Display Settings
                     EditorGUILayout.LabelField(GetLoc("Additional Settings"), EditorStyles.boldLabel);
                     EditorGUI.indentLevel++;
                     m_MaterialEditor.ShaderProperty(_NumTexRotation, GetLoc("Rotation"));
                     m_MaterialEditor.ShaderProperty(_NumTexDisplaylength, GetLoc("Display Length"));
                     m_MaterialEditor.ShaderProperty(_NumTexAlignment, GetLoc("Alignment"));
                     m_MaterialEditor.ShaderProperty(_NumTexCharacterOffset, GetLoc("Character Offset"));
+                    EditorGUI.indentLevel--;
+
+                    DrawLine();
+
+                    // Emission Settings
+                    EditorGUILayout.LabelField(GetLoc("Emission Settings"), EditorStyles.boldLabel);
+                    EditorGUI.indentLevel++;
+                    m_MaterialEditor.ShaderProperty(_DecalNumberEmissionStrength, GetLoc("Emission Strength"));
                     EditorGUI.indentLevel--;
                 }
                 
@@ -234,12 +242,18 @@ namespace lilToon
                     }
                     EditorGUI.indentLevel--;
 
-                    DrawLine();
-
-                    // Rotation Settings
+                    DrawLine();                    // Rotation Settings
                     EditorGUILayout.LabelField(GetLoc("Rotation Settings"), EditorStyles.boldLabel);
                     EditorGUI.indentLevel++;
                     m_MaterialEditor.ShaderProperty(_DecalRotation, GetLoc("Rotation Angle"));
+                    EditorGUI.indentLevel--;
+
+                    DrawLine();
+
+                    // Emission Settings
+                    EditorGUILayout.LabelField(GetLoc("Emission Settings"), EditorStyles.boldLabel);
+                    EditorGUI.indentLevel++;
+                    m_MaterialEditor.ShaderProperty(_DecalTextureEmissionStrength, GetLoc("Emission Strength"));
                     EditorGUI.indentLevel--;
                 }
 
