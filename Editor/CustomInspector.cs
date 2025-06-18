@@ -74,118 +74,105 @@ namespace lilToon
             _HeartRateEmissionMinTexture = FindProperty("_HeartRateEmissionMinTexture", props);            _HeartRateEmissionMaxTexture = FindProperty("_HeartRateEmissionMaxTexture", props);
             _UseHeartRateScaleTexture = FindProperty("_UseHeartRateScaleTexture", props);
             _HeartRateScaleIntensity = FindProperty("_HeartRateScaleIntensity", props);
-        }
-
-        protected override void DrawCustomProperties(Material material)
+        }        protected override void DrawCustomProperties(Material material)
         {
-            // GUIStyles Name   Description
-            // ---------------- ------------------------------------
-            // boxOuter         outer box
-            // boxInnerHalf     inner box
-            // boxInner         inner box without label
-            // customBox        box (similar to unity default box)
-            // customToggleFont label for box
-
             isShowCustomProperties = Foldout(GetLoc("Decal Heart Rate"), GetLoc("Decal Menu"), isShowCustomProperties);
             if(isShowCustomProperties)
             {
-                // OSC Settings Section
+                // ===== OSC SETTINGS =====
                 EditorGUILayout.BeginVertical(boxOuter);
-                EditorGUILayout.LabelField(GetLoc("OSC setting"), customToggleFont);
+                EditorGUILayout.LabelField("Heart Rate Settings", customToggleFont);
                 EditorGUILayout.BeginVertical(boxInnerHalf);
                 EditorGUI.indentLevel++;
-                m_MaterialEditor.ShaderProperty(_IntHeartRate, GetLoc("HeartRate (OSC)"));
+                m_MaterialEditor.ShaderProperty(_IntHeartRate, GetLoc("Heart Rate (OSC)"));
+                EditorGUILayout.HelpBox("Connect heart rate value via OSC for dynamic effects.", MessageType.Info);
                 EditorGUI.indentLevel--;
                 EditorGUILayout.EndVertical();
                 EditorGUILayout.EndVertical();
 
-                // Decal Number Section
+                EditorGUILayout.Space();
+
+                // ===== NUMBER DECAL =====
                 EditorGUILayout.BeginVertical(boxOuter);
-                m_MaterialEditor.ShaderProperty(_ActiveDecalNumber, GetLoc("Decal Number"));
+                m_MaterialEditor.ShaderProperty(_ActiveDecalNumber, "Number Decal");
                 EditorGUILayout.BeginVertical(boxInnerHalf);
 
                 if(_ActiveDecalNumber.floatValue == 1)
                 {
                     // Texture Settings
-                    EditorGUILayout.LabelField(GetLoc("Texture Settings"), EditorStyles.boldLabel);
+                    EditorGUILayout.LabelField("Texture", EditorStyles.boldLabel);
                     EditorGUI.indentLevel++;
-                    m_MaterialEditor.TexturePropertySingleLine(new GUIContent(GetLoc("Number Texture")), _SpriteNumberTexture, _SpriteNumberTextureColor);
-                    m_MaterialEditor.ShaderProperty(_NumberTextureBlendMode, GetLoc("Blend Mode"));
+                    m_MaterialEditor.TexturePropertySingleLine(new GUIContent("Number Texture"), _SpriteNumberTexture, _SpriteNumberTextureColor);
+                    m_MaterialEditor.ShaderProperty(_NumberTextureBlendMode, "Blend Mode");
                     EditorGUI.indentLevel--;
 
                     DrawLine();
 
-                    // Position Settings
-                    EditorGUILayout.LabelField(GetLoc("Position Settings"), EditorStyles.boldLabel);
+                    // Transform Settings
+                    EditorGUILayout.LabelField("Transform", EditorStyles.boldLabel);
                     EditorGUI.indentLevel++;
+                    
+                    // Position
                     EditorGUI.BeginChangeCheck();
                     Vector4 positionXVector = _TexPositionXVector.vectorValue;
                     Vector4 positionYVector = _TexPositionYVector.vectorValue;
-
-                    positionXVector.x = EditorGUILayout.Slider(GetLoc("Position X"), positionXVector.x, -1.0f, 1.0f);
-                    positionYVector.x = EditorGUILayout.Slider(GetLoc("Position Y"), positionYVector.x, -1.0f, 1.0f);
-
+                    positionXVector.x = EditorGUILayout.Slider("Position X", positionXVector.x, -1.0f, 1.0f);
+                    positionYVector.x = EditorGUILayout.Slider("Position Y", positionYVector.x, -1.0f, 1.0f);
                     if(EditorGUI.EndChangeCheck())
                     {
                         _TexPositionXVector.vectorValue = positionXVector;
                         _TexPositionYVector.vectorValue = positionYVector;
                     }
-                    EditorGUI.indentLevel--;
 
-                    DrawLine();
-
-                    // Scale Settings
-                    EditorGUILayout.LabelField(GetLoc("Scale Settings"), EditorStyles.boldLabel);
-                    EditorGUI.indentLevel++;
-                    
-                    // Sync toggle for number texture
-                    m_MaterialEditor.ShaderProperty(_SyncDecalNumberTextureScale, GetLoc("Sync Scale"));
-                    
+                    // Scale
+                    m_MaterialEditor.ShaderProperty(_SyncDecalNumberTextureScale, "Sync Scale X/Y");
                     EditorGUI.BeginChangeCheck();
                     Vector4 scaleXVector = _TexScaleXVector.vectorValue;
                     Vector4 scaleYVector = _TexScaleYVector.vectorValue;
-
                     if(_SyncDecalNumberTextureScale.floatValue == 1)
                     {
-                        // Synchronized scale control
-                        float syncedScale = EditorGUILayout.Slider(GetLoc("Scale"), scaleXVector.x, 0.0f, 1.0f);
+                        float syncedScale = EditorGUILayout.Slider("Scale", scaleXVector.x, 0.0f, 1.0f);
                         scaleXVector.x = syncedScale;
                         scaleYVector.x = syncedScale;
                     }
                     else
                     {
-                        // Individual scale controls
-                        scaleXVector.x = EditorGUILayout.Slider(GetLoc("Scale X"), scaleXVector.x, 0.0f, 1.0f);
-                        scaleYVector.x = EditorGUILayout.Slider(GetLoc("Scale Y"), scaleYVector.x, 0.0f, 1.0f);
+                        scaleXVector.x = EditorGUILayout.Slider("Scale X", scaleXVector.x, 0.0f, 1.0f);
+                        scaleYVector.x = EditorGUILayout.Slider("Scale Y", scaleYVector.x, 0.0f, 1.0f);
                     }
-
                     if(EditorGUI.EndChangeCheck())
                     {
                         _TexScaleXVector.vectorValue = scaleXVector;
                         _TexScaleYVector.vectorValue = scaleYVector;
                     }
+
+                    // Rotation
+                    m_MaterialEditor.ShaderProperty(_NumTexRotation, "Rotation");
                     EditorGUI.indentLevel--;
 
-                    DrawLine();                    // Rotation & Display Settings
-                    EditorGUILayout.LabelField(GetLoc("Additional Settings"), EditorStyles.boldLabel);
-                    EditorGUI.indentLevel++;
-                    m_MaterialEditor.ShaderProperty(_NumTexRotation, GetLoc("Rotation"));
-                    m_MaterialEditor.ShaderProperty(_NumTexDisplaylength, GetLoc("Display Length"));
-                    m_MaterialEditor.ShaderProperty(_NumTexAlignment, GetLoc("Alignment"));
-                    m_MaterialEditor.ShaderProperty(_NumTexCharacterOffset, GetLoc("Character Offset"));
-                    EditorGUI.indentLevel--;
+                    DrawLine();
 
-                    DrawLine();                    // Emission Settings
-                    EditorGUILayout.LabelField(GetLoc("Emission Settings"), EditorStyles.boldLabel);
+                    // Display Settings
+                    EditorGUILayout.LabelField("Display", EditorStyles.boldLabel);
                     EditorGUI.indentLevel++;
-                    m_MaterialEditor.ShaderProperty(_DecalNumberEmissionStrength, GetLoc("Emission Strength"));
-                    m_MaterialEditor.ShaderProperty(_UseHeartRateEmission, GetLoc("Use HeartRate Emission"));
+                    m_MaterialEditor.ShaderProperty(_NumTexDisplaylength, "Display Length");
+                    m_MaterialEditor.ShaderProperty(_NumTexAlignment, "Alignment");
+                    m_MaterialEditor.ShaderProperty(_NumTexCharacterOffset, "Character Offset");
+                    EditorGUI.indentLevel--;                    DrawLine();
+
+                    // Emission Settings
+                    EditorGUILayout.LabelField("Emission", EditorStyles.boldLabel);
+                    EditorGUI.indentLevel++;
+                    m_MaterialEditor.ShaderProperty(_DecalNumberEmissionStrength, "Basic Emission Strength");
                     
+                    EditorGUILayout.Space(3);
+                    m_MaterialEditor.ShaderProperty(_UseHeartRateEmission, "Heart Rate Emission");
                     if(_UseHeartRateEmission.floatValue == 1)
                     {
                         EditorGUI.indentLevel++;
-                        m_MaterialEditor.ShaderProperty(_HeartRateEmissionMin, GetLoc("Min Intensity"));
-                        m_MaterialEditor.ShaderProperty(_HeartRateEmissionMax, GetLoc("Max Intensity"));
+                        m_MaterialEditor.ShaderProperty(_HeartRateEmissionMin, "Min Intensity");
+                        m_MaterialEditor.ShaderProperty(_HeartRateEmissionMax, "Max Intensity");
+                        EditorGUILayout.HelpBox("Numbers will pulse with heart rate rhythm.", MessageType.Info);
                         EditorGUI.indentLevel--;
                     }
                     EditorGUI.indentLevel--;
@@ -194,106 +181,97 @@ namespace lilToon
                 EditorGUILayout.EndVertical();
                 EditorGUILayout.EndVertical();
 
-                // Decal Texture Section
+                EditorGUILayout.Space();
+
+                // ===== TEXTURE DECAL =====
                 EditorGUILayout.BeginVertical(boxOuter);
-                m_MaterialEditor.ShaderProperty(_ActiveDecalTexture, GetLoc("Decal Texture"));
+                m_MaterialEditor.ShaderProperty(_ActiveDecalTexture, "Texture Decal");
                 EditorGUILayout.BeginVertical(boxInnerHalf);
+                
                 if(_ActiveDecalTexture.floatValue == 1)
                 {
-                    EditorGUILayout.Space();
-                      // Texture Settings
-                    EditorGUILayout.LabelField(GetLoc("Texture Settings"), EditorStyles.boldLabel);
+                    // Texture Settings
+                    EditorGUILayout.LabelField("Texture", EditorStyles.boldLabel);
                     EditorGUI.indentLevel++;
-                    m_MaterialEditor.TexturePropertySingleLine(new GUIContent(GetLoc("Decal Texture")), _DecalTexture, _DecalTextureColor);
-                    m_MaterialEditor.ShaderProperty(_DecalTextureBlendMode, GetLoc("Blend Mode"));
+                    m_MaterialEditor.TexturePropertySingleLine(new GUIContent("Decal Texture"), _DecalTexture, _DecalTextureColor);
+                    m_MaterialEditor.ShaderProperty(_DecalTextureBlendMode, "Blend Mode");
                     EditorGUI.indentLevel--;
 
                     DrawLine();
 
-                    // Position Settings
-                    EditorGUILayout.LabelField(GetLoc("Position Settings"), EditorStyles.boldLabel);
+                    // Transform Settings
+                    EditorGUILayout.LabelField("Transform", EditorStyles.boldLabel);
                     EditorGUI.indentLevel++;
+                    
+                    // Position
                     EditorGUI.BeginChangeCheck();
                     Vector4 decalPositionXVector = _DecalPositionXVector.vectorValue;
                     Vector4 decalPositionYVector = _DecalPositionYVector.vectorValue;
-
-                    decalPositionXVector.x = EditorGUILayout.Slider(GetLoc("Position X"), decalPositionXVector.x, -1.0f, 1.0f);
-                    decalPositionYVector.x = EditorGUILayout.Slider(GetLoc("Position Y"), decalPositionYVector.x, -1.0f, 1.0f);
-
+                    decalPositionXVector.x = EditorGUILayout.Slider("Position X", decalPositionXVector.x, -1.0f, 1.0f);
+                    decalPositionYVector.x = EditorGUILayout.Slider("Position Y", decalPositionYVector.x, -1.0f, 1.0f);
                     if(EditorGUI.EndChangeCheck())
                     {
                         _DecalPositionXVector.vectorValue = decalPositionXVector;
                         _DecalPositionYVector.vectorValue = decalPositionYVector;
                     }
-                    EditorGUI.indentLevel--;
 
-                    DrawLine();
-
-                    // Scale Settings
-                    EditorGUILayout.LabelField(GetLoc("Scale Settings"), EditorStyles.boldLabel);
-                    EditorGUI.indentLevel++;
-                    
-                    // Sync toggle for decal texture
-                    m_MaterialEditor.ShaderProperty(_SyncDecalTextureScale, GetLoc("Sync Scale"));
-                    
+                    // Scale
+                    m_MaterialEditor.ShaderProperty(_SyncDecalTextureScale, "Sync Scale X/Y");
                     EditorGUI.BeginChangeCheck();
                     Vector4 decalScaleXVector = _DecalScaleXVector.vectorValue;
                     Vector4 decalScaleYVector = _DecalScaleYVector.vectorValue;
-
                     if(_SyncDecalTextureScale.floatValue == 1)
                     {
-                        // Synchronized scale control
-                        float syncedScale = EditorGUILayout.Slider(GetLoc("Scale"), decalScaleXVector.x, 0.0f, 1.0f);
+                        float syncedScale = EditorGUILayout.Slider("Scale", decalScaleXVector.x, 0.0f, 1.0f);
                         decalScaleXVector.x = syncedScale;
                         decalScaleYVector.x = syncedScale;
                     }
                     else
                     {
-                        // Individual scale controls
-                        decalScaleXVector.x = EditorGUILayout.Slider(GetLoc("Scale X"), decalScaleXVector.x, 0.0f, 1.0f);
-                        decalScaleYVector.x = EditorGUILayout.Slider(GetLoc("Scale Y"), decalScaleYVector.x, 0.0f, 1.0f);
+                        decalScaleXVector.x = EditorGUILayout.Slider("Scale X", decalScaleXVector.x, 0.0f, 1.0f);
+                        decalScaleYVector.x = EditorGUILayout.Slider("Scale Y", decalScaleYVector.x, 0.0f, 1.0f);
                     }
-
                     if(EditorGUI.EndChangeCheck())
                     {
                         _DecalScaleXVector.vectorValue = decalScaleXVector;
                         _DecalScaleYVector.vectorValue = decalScaleYVector;
                     }
-                    EditorGUI.indentLevel--;
 
-                    DrawLine();                    // Rotation Settings
-                    EditorGUILayout.LabelField(GetLoc("Rotation Settings"), EditorStyles.boldLabel);
-                    EditorGUI.indentLevel++;
-                    m_MaterialEditor.ShaderProperty(_DecalRotation, GetLoc("Rotation Angle"));
-                    EditorGUI.indentLevel--;
+                    // Rotation
+                    m_MaterialEditor.ShaderProperty(_DecalRotation, "Rotation Angle");
+                    EditorGUI.indentLevel--;                    DrawLine();
 
-                    DrawLine();                    // Emission Settings
-                    EditorGUILayout.LabelField(GetLoc("Emission Settings"), EditorStyles.boldLabel);
+                    // Emission Settings
+                    EditorGUILayout.LabelField("Emission", EditorStyles.boldLabel);
                     EditorGUI.indentLevel++;
-                    m_MaterialEditor.ShaderProperty(_DecalTextureEmissionStrength, GetLoc("Emission Strength"));
-                    m_MaterialEditor.ShaderProperty(_UseHeartRateEmissionTexture, GetLoc("Use HeartRate Emission"));
-                      if(_UseHeartRateEmissionTexture.floatValue == 1)
+                    m_MaterialEditor.ShaderProperty(_DecalTextureEmissionStrength, "Basic Emission Strength");
+                    
+                    EditorGUILayout.Space(3);
+                    m_MaterialEditor.ShaderProperty(_UseHeartRateEmissionTexture, "Heart Rate Emission");
+                    if(_UseHeartRateEmissionTexture.floatValue == 1)
                     {
                         EditorGUI.indentLevel++;
-                        m_MaterialEditor.ShaderProperty(_HeartRateEmissionMinTexture, GetLoc("Min Intensity"));
-                        m_MaterialEditor.ShaderProperty(_HeartRateEmissionMaxTexture, GetLoc("Max Intensity"));
+                        m_MaterialEditor.ShaderProperty(_HeartRateEmissionMinTexture, "Min Intensity");
+                        m_MaterialEditor.ShaderProperty(_HeartRateEmissionMaxTexture, "Max Intensity");
                         EditorGUI.indentLevel--;
                     }
-                    
+                    EditorGUI.indentLevel--;
+
                     DrawLine();
-                    
-                    // HeartRate Scale Settings
-                    m_MaterialEditor.ShaderProperty(_UseHeartRateScaleTexture, GetLoc("Use HeartRate Scale"));                    if(_UseHeartRateScaleTexture.floatValue == 1)
+
+                    // Heart Rate Scale Effects
+                    EditorGUILayout.LabelField("Heart Rate Scale", EditorStyles.boldLabel);
+                    EditorGUI.indentLevel++;
+                    m_MaterialEditor.ShaderProperty(_UseHeartRateScaleTexture, "Enable Heart Rate Scale");
+                    if(_UseHeartRateScaleTexture.floatValue == 1)
                     {
                         EditorGUI.indentLevel++;
-                        m_MaterialEditor.ShaderProperty(_HeartRateScaleIntensity, GetLoc("Scale Intensity"));
-                        EditorGUILayout.HelpBox("Decal texture will pulse based on heart rate using damped oscillation.", MessageType.Info);
+                        m_MaterialEditor.ShaderProperty(_HeartRateScaleIntensity, "Scale Intensity");
+                        EditorGUILayout.HelpBox("Texture will pulse and bounce with heart rate using damped oscillation.", MessageType.Info);
                         EditorGUI.indentLevel--;
                     }
                     EditorGUI.indentLevel--;
-                }
-
-                EditorGUILayout.EndVertical();
+                }                EditorGUILayout.EndVertical();
                 EditorGUILayout.EndVertical();
             }
         }
