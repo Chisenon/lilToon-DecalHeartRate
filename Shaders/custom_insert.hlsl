@@ -1,11 +1,10 @@
-// 定数定義
 static const float kColumns = 10.0;
-static const float kInvColumns = 0.1;  // 1.0 / kColumns
+static const float kInvColumns = 0.1;
 static const float kMarginRatio = 0.05;
 static const float kInsetRatio = 0.15;
 static const float kTau = 6.28318530718;
 static const float kAlphaThreshold = 0.5;
-static const float kEmissionScale = 0.01;  // 1.0 / 100.0
+static const float kEmissionScale = 0.01;
 static const float2 kUvCenter = float2(0.5, 0.5);
 static const float3 kZeroColor = float3(0.0, 0.0, 0.0);
 
@@ -35,16 +34,13 @@ float calcDigit(float val, float digitNum)
     return floor(fmodglsl(abs(val), digitNum * 10.0) / digitNum);
 }
 
-// スプライトサンプリング用の共通処理
 float2 calculateSpriteUV(float localUvX, float spriteColumnIndex, float characterOffset)
 {
-    // マージン処理
     if (localUvX < kMarginRatio || localUvX > (1.0 - kMarginRatio))
-        return float2(-1.0, 0.0); // 無効なUVを示すフラグ
+        return float2(-1.0, 0.0);
     
     localUvX = saturate((localUvX - kMarginRatio) / (1.0 - 2.0 * kMarginRatio) + characterOffset);
     
-    // アトラス座標計算
     float charStartU = spriteColumnIndex * kInvColumns;
     float actualInset = kInvColumns * kInsetRatio;
     float sampleStartU = charStartU + actualInset;
@@ -55,7 +51,6 @@ float2 calculateSpriteUV(float localUvX, float spriteColumnIndex, float characte
 
 float3 sampleSprite(float val, float2 uv, float displayLength, float alignMode, float characterOffset)
 {
-    // 早期リターン - 範囲外チェック
     if (any(uv < 0.0) || any(uv >= 1.0))
         return kZeroColor;
 
@@ -69,14 +64,13 @@ float3 sampleSprite(float val, float2 uv, float displayLength, float alignMode, 
     float digitToRender;
     bool renderThisDigit = false;
 
-    // アライメント処理の統合
-    if (alignMode == 0.0) // 左寄せ
+    if (alignMode == 0.0)
     {
         float power = pow(10.0, displayLength - 1.0 - currentDigitSlot);
         digitToRender = calcDigit(val, power);
         renderThisDigit = true;
     }
-    else if (alignMode == 1.0) // 右寄せ
+    else if (alignMode == 1.0)
     {
         float emptySlotsOnLeft = max(0.0, displayLength - numActualDigits);
         if (currentDigitSlot >= emptySlotsOnLeft)
@@ -87,7 +81,7 @@ float3 sampleSprite(float val, float2 uv, float displayLength, float alignMode, 
             renderThisDigit = true;
         }
     }
-    else // 自然
+    else
     {
         if (currentDigitSlot < numActualDigits)
         {
@@ -98,26 +92,23 @@ float3 sampleSprite(float val, float2 uv, float displayLength, float alignMode, 
     }
 
     if (!renderThisDigit)
-        return kZeroColor;
-
-    // スプライトUV計算
-    float localUvX = frac(uv.x * displayLength);
+        return kZeroColor;    float localUvX = frac(uv.x * displayLength);
     float2 spriteUvData = calculateSpriteUV(localUvX, digitToRender, characterOffset);
     
-    if (spriteUvData.x < 0.0) // 無効なUV
+    if (spriteUvData.x < 0.0)
         return kZeroColor;
     
     float2 spriteUv = float2(spriteUvData.x, uv.y);
     
-    // 境界チェックの簡略化
     if (digitToRender >= kColumns)
-        return kZeroColor;    float4 texSample = LIL_SAMPLE_2D(_SpriteNumberTexture, sampler_SpriteNumberTexture, spriteUv);
+        return kZeroColor;
+
+    float4 texSample = LIL_SAMPLE_2D(_SpriteNumberTexture, sampler_SpriteNumberTexture, spriteUv);
     return (texSample.a < kAlphaThreshold) ? kZeroColor : texSample.rgb;
 }
 
 float3 sampleSpriteSigned(float val, float2 uv, float displayLength, float align, float characterOffset)
 {
-    // 早期リターン
     if (any(uv < 0.0) || any(uv >= 1.0))
         return kZeroColor;
 
@@ -127,13 +118,11 @@ float3 sampleSpriteSigned(float val, float2 uv, float displayLength, float align
 
     if (uv.x >= singleCharDisplayWidth) 
     { 
-        // 数字部分
         float2 numberPartUv = float2(saturate((uv.x - singleCharDisplayWidth) / (1.0 - singleCharDisplayWidth)), uv.y);
         return sampleSprite(abs(val), numberPartUv, originalDisplayLength, align, characterOffset);
     } 
     else if (val < 0.0) 
     { 
-        // マイナス記号部分（効率化）
         float localUvX = uv.x / singleCharDisplayWidth;
         float2 spriteUvData = calculateSpriteUV(localUvX, 10.0, characterOffset);
         
@@ -149,16 +138,13 @@ float3 sampleSpriteSigned(float val, float2 uv, float displayLength, float align
     return kZeroColor;
 }
 
-//------------------------------------------------------------------------------------------------------------------------------
-// Heart Rate Emission Functions
-
 float calculateHeartRateEmission(float heartRate, float minIntensity, float maxIntensity)
 {
     if (heartRate <= 0.0) 
         return minIntensity * kEmissionScale;
     
     float phase = frac(_Time.y * heartRate / 60.0);
-    float pulse = (phase < 0.1) ? (phase * 10.0) : exp(-(phase - 0.1) * 4.167); // 3.75/0.9
+    float pulse = (phase < 0.1) ? (phase * 10.0) : exp(-(phase - 0.1) * 4.167);
     
     return lerp(minIntensity, maxIntensity, saturate(pulse)) * kEmissionScale;
 }
@@ -170,7 +156,6 @@ float calculateHeartRateScale(float heartRate)
     
     float phase = frac(_Time.y * heartRate / 60.0);
     
-    // 定数の事前定義
     static const float kDampingFactor = 5.0;
     static const float kOscillationFreq = 4.0;
     static const float kExpandThreshold = 0.05;
@@ -178,13 +163,11 @@ float calculateHeartRateScale(float heartRate)
     
     if (phase < kExpandThreshold)
     {
-        // 急激な拡張フェーズ
         float expandPhase = phase / kExpandThreshold;
         return 1.0 + _HeartRateScaleIntensity * (1.0 - exp(-expandPhase * 5.0));
     }
     else
     {
-        // 減衰振動フェーズ
         float oscillationPhase = (phase - kExpandThreshold) / (1.0 - kExpandThreshold);
         float dampedAmplitude = exp(-kDampingFactor * oscillationPhase);
         
@@ -200,29 +183,33 @@ void lilGetDecalTexture(inout lilFragData fd LIL_SAMP_IN_FUNC(samp))
 {
     if (!_ActiveDecalTexture) return;
     
-    float2 offset = float2(_DecalPositionXVector.x, _DecalPositionYVector.x);
-    float2 scale = max(float2(_DecalScaleXVector.x, _DecalScaleYVector.x), float2(0.001, 0.001));
+    float2 offset = float2(_DecalPositionXVector.x, _DecalPositionYVector.x);    float2 scale = max(float2(_DecalScaleXVector.x, _DecalScaleYVector.x), float2(0.001, 0.001));
     
-    // 心拍数スケール適用
     if (_UseHeartRateScaleTexture && _IntHeartRate > 0)
         scale *= calculateHeartRateScale(float(_IntHeartRate));
     
     float2 uv2 = invAffineTransform(fd.uvMain, offset, -_DecalRotation, scale);
-    float4 decalColor = LIL_SAMPLE_2D(_DecalTexture, sampler_DecalTexture, uv2) * _DecalTextureColor;
-    decalColor.a *= lilIsIn0to1(uv2);
     
-    if (decalColor.a > 0.0)
+    float uvMask = lilIsIn0to1(uv2);
+    if (uvMask <= 0.0) return;
+      float4 decalColor = LIL_SAMPLE_2D(_DecalTexture, sampler_DecalTexture, uv2) * _DecalTextureColor;
+    
+    float decalMask = decalColor.a * uvMask;
+    if (decalMask > 0.001)
     {
-        // カラーブレンド
-        fd.col.rgb = lerp(fd.col.rgb, lilBlendColor(fd.col.rgb, decalColor.rgb, decalColor.a, _DecalTextureBlendMode), decalColor.a);
-        
-        // エミッション処理
-        float emissionStrength = _UseHeartRateEmissionTexture ? 
-            calculateHeartRateEmission(float(_IntHeartRate), _HeartRateEmissionMinTexture, _HeartRateEmissionMaxTexture) * 100.0 :
-            _DecalTextureEmissionStrength;
+        fd.col.rgb = lerp(fd.col.rgb, lilBlendColor(fd.col.rgb, decalColor.rgb, decalMask, _DecalTextureBlendMode), decalMask);        
+        float emissionStrength;
+        if (_UseHeartRateEmissionTexture)
+        {
+            emissionStrength = calculateHeartRateEmission(float(_IntHeartRate), _HeartRateEmissionMinTexture, _HeartRateEmissionMaxTexture) * 100.0;
+        }
+        else
+        {
+            emissionStrength = _DecalTextureEmissionStrength;
+        }
         
         if (emissionStrength > 0.0)
-            fd.emissionColor += decalColor.rgb * (emissionStrength * kEmissionScale) * decalColor.a;
+            fd.emissionColor += decalColor.rgb * (emissionStrength * kEmissionScale) * decalMask;
     }
 }
 
@@ -230,33 +217,42 @@ void lilGetDecalNumber(inout lilFragData fd LIL_SAMP_IN_FUNC(samp))
 {
     if (!_ActiveDecalNumber) return;
     
-    float2 offset = float2(_TexPositionXVector.x, _TexPositionYVector.x);
-    float2 scale = max(float2(_TexScaleXVector.x, _TexScaleYVector.x), float2(0.001, 0.001));
+    float2 offset = float2(_TexPositionXVector.x, _TexPositionYVector.x);    float2 scale = max(float2(_TexScaleXVector.x, _TexScaleYVector.x), float2(0.001, 0.001));
     float2 numUv = invAffineTransform(fd.uvMain, offset, -_NumTexRotation, scale);
     
-    float heartRateValue = round(float(_IntHeartRate));
+    float uvMask = lilIsIn0to1(numUv);
+    if (uvMask <= 0.0) return;
+      float heartRateValue = round(float(_IntHeartRate));
     float3 numberColor = sampleSprite(heartRateValue, numUv, _NumTexDisplaylength, float(_NumTexAlignment), _NumTexCharacterOffset);
     
-    float numberAlpha = (dot(numberColor, numberColor) > 0.000001) ? lilIsIn0to1(numUv) : 0.0;
+    float numberMask = (dot(numberColor, numberColor) > 0.000001) ? uvMask : 0.0;
     
-    if (numberAlpha > 0.001)
+    if (numberMask > 0.001)
     {
-        float4 colorNumber = float4(numberColor * _SpriteNumberTextureColor.rgb, numberAlpha * _SpriteNumberTextureColor.a);
+        float3 finalNumberColor = numberColor * _SpriteNumberTextureColor.rgb;
         
-        // カラーブレンド
-        fd.col.rgb = lerp(fd.col.rgb, lilBlendColor(fd.col.rgb, colorNumber.rgb, colorNumber.a, _NumberTextureBlendMode), colorNumber.a);
-        
-        // エミッション処理
-        float emissionStrength = _UseHeartRateEmission ? 
-            calculateHeartRateEmission(float(_IntHeartRate), _HeartRateEmissionMin, _HeartRateEmissionMax) * 100.0 :
-            _DecalNumberEmissionStrength;
+        fd.col.rgb = lerp(fd.col.rgb, lilBlendColor(fd.col.rgb, finalNumberColor, numberMask, _NumberTextureBlendMode), numberMask);        
+        float emissionStrength;
+        if (_UseHeartRateEmission)
+        {
+            emissionStrength = calculateHeartRateEmission(float(_IntHeartRate), _HeartRateEmissionMin, _HeartRateEmissionMax) * 100.0;
+        }
+        else
+        {
+            emissionStrength = _DecalNumberEmissionStrength;
+        }
         
         if (emissionStrength > 0.0)
-            fd.emissionColor += colorNumber.rgb * (emissionStrength * kEmissionScale) * colorNumber.a;
+            fd.emissionColor += finalNumberColor * (emissionStrength * kEmissionScale) * numberMask;
     }
 }
 
-//------------------------------------------------------------------------------------------------------------------------------
+#if !defined(BEFORE_MAIN3RD)
+    #define BEFORE_MAIN3RD \
+        lilGetDecalTexture(fd LIL_SAMP_IN(sampler_MainTex)); \
+        lilGetDecalNumber(fd LIL_SAMP_IN(sampler_MainTex));
+#endif
+
 #if !defined(OVERRIDE_ALPHAMASK)
     #define OVERRIDE_ALPHAMASK \
         lilGetDecalTexture(fd LIL_SAMP_IN(sampler_MainTex)); \
