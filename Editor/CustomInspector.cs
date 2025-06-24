@@ -25,13 +25,16 @@ namespace lilToon
         MaterialProperty _TexScaleYVector;
         MaterialProperty _NumTexRotation;
         MaterialProperty _NumTexDisplaylength;
-        MaterialProperty _NumTexAlignment;        MaterialProperty _NumTexCharacterOffset;
-        MaterialProperty _SyncDecalNumberTextureScale;        MaterialProperty _SyncDecalTextureScale;
+        MaterialProperty _NumTexAlignment;
+        MaterialProperty _NumTexCharacterOffset;
+        MaterialProperty _SyncDecalNumberTextureScale;
+        MaterialProperty _SyncDecalTextureScale;
         MaterialProperty _DecalNumberEmissionStrength;
         MaterialProperty _DecalTextureEmissionStrength;
         MaterialProperty _UseHeartRateEmission;
         MaterialProperty _HeartRateEmissionMin;
-        MaterialProperty _HeartRateEmissionMax;        MaterialProperty _UseHeartRateEmissionTexture;
+        MaterialProperty _HeartRateEmissionMax;
+        MaterialProperty _UseHeartRateEmissionTexture;
         MaterialProperty _HeartRateEmissionMinTexture;
         MaterialProperty _HeartRateEmissionMaxTexture;
         MaterialProperty _UseHeartRateScaleTexture;
@@ -44,7 +47,8 @@ namespace lilToon
         {
             isCustomShader = true;
             ReplaceToCustomShaders();
-            isShowRenderMode = !material.shader.name.Contains("Optional");            _IntHeartRate = FindProperty("_IntHeartRate", props);
+            isShowRenderMode = !material.shader.name.Contains("Optional");
+            _IntHeartRate = FindProperty("_IntHeartRate", props);
             _ActiveDecalNumber = FindProperty("_ActiveDecalNumber", props);
             _ActiveDecalTexture = FindProperty("_ActiveDecalTexture", props);
             _SpriteNumberTexture = FindProperty("_SpriteNumberTexture", props);
@@ -64,17 +68,22 @@ namespace lilToon
             _TexScaleYVector = FindProperty("_TexScaleYVector", props);
             _NumTexRotation = FindProperty("_NumTexRotation", props);
             _NumTexDisplaylength = FindProperty("_NumTexDisplaylength", props);
-            _NumTexAlignment = FindProperty("_NumTexAlignment", props);            _NumTexCharacterOffset = FindProperty("_NumTexCharacterOffset", props);
-            _SyncDecalNumberTextureScale = FindProperty("_SyncDecalNumberTextureScale", props);            _SyncDecalTextureScale = FindProperty("_SyncDecalTextureScale", props);
+            _NumTexAlignment = FindProperty("_NumTexAlignment", props);
+            _NumTexCharacterOffset = FindProperty("_NumTexCharacterOffset", props);
+            _SyncDecalNumberTextureScale = FindProperty("_SyncDecalNumberTextureScale", props);
+            _SyncDecalTextureScale = FindProperty("_SyncDecalTextureScale", props);
             _DecalNumberEmissionStrength = FindProperty("_DecalNumberEmissionStrength", props);
             _DecalTextureEmissionStrength = FindProperty("_DecalTextureEmissionStrength", props);
             _UseHeartRateEmission = FindProperty("_UseHeartRateEmission", props);
             _HeartRateEmissionMin = FindProperty("_HeartRateEmissionMin", props);
-            _HeartRateEmissionMax = FindProperty("_HeartRateEmissionMax", props);            _UseHeartRateEmissionTexture = FindProperty("_UseHeartRateEmissionTexture", props);
-            _HeartRateEmissionMinTexture = FindProperty("_HeartRateEmissionMinTexture", props);            _HeartRateEmissionMaxTexture = FindProperty("_HeartRateEmissionMaxTexture", props);
+            _HeartRateEmissionMax = FindProperty("_HeartRateEmissionMax", props);
+            _UseHeartRateEmissionTexture = FindProperty("_UseHeartRateEmissionTexture", props);
+            _HeartRateEmissionMinTexture = FindProperty("_HeartRateEmissionMinTexture", props);
+            _HeartRateEmissionMaxTexture = FindProperty("_HeartRateEmissionMaxTexture", props);
             _UseHeartRateScaleTexture = FindProperty("_UseHeartRateScaleTexture", props);
             _HeartRateScaleIntensity = FindProperty("_HeartRateScaleIntensity", props);
-        }        protected override void DrawCustomProperties(Material material)
+        }
+        protected override void DrawCustomProperties(Material material)
         {
             isShowCustomProperties = Foldout(GetLoc("Decal Heart Rate"), GetLoc("Decal Menu"), isShowCustomProperties);
             if(isShowCustomProperties)
