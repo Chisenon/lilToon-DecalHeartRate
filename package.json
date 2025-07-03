@@ -1,0 +1,17 @@
+{
+    "name" : "net.chisenon.liltoon-decalheartrate",
+    "displayName" : "lilToon-DecalHeartRate",
+    "version" : "0.9.0",
+    "author": {
+      "name": "Chisenon",
+      "url":"https://github.com/chisenon"
+    },
+    "unity" : "2019.4",
+    "description" : "Heart rate decal shader based on lilToon",    
+    "vpmDependencies" : {
+      "jp.lilxyzw.liltoon": ">=1.8.0"
+    },
+    "legacyFolders" : {
+      "Assets\\!_ChiseNote\\lilToon-DecalHeartRate": ""
+    }
+}
