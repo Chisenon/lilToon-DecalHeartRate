@@ -6,11 +6,8 @@ lilToonベースの心拍数に特化したDecalShader
 
 ### VPM (VRChat Package Manager) を使用
 
-[![Add to VPM](https://img.shields.io/badge/Add_to_VPM-Repository-blue?style=for-the-badge)](https://chisenon.github.io/chisenote_vpm/index.json)
+**[https://chisenon.github.io/chisenote_vpm/](https://chisenon.github.io/chisenote_vpm/)**
 
-直接URLをクリック
-
-[https://chisenon.github.io/chisenote_vpm/index.json](https://chisenon.github.io/chisenote_vpm/index.json)
 
 ## 必要要件
 
