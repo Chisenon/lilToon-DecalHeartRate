@@ -8,6 +8,12 @@ static const float kEmissionScale = 0.01;
 static const float2 kUvCenter = float2(0.5, 0.5);
 static const float3 kZeroColor = float3(0.0, 0.0, 0.0);
 
+// 通常の四捨五入関数（0.5は常に切り上げ）
+float roundHalfUp(float value)
+{
+    return floor(value + 0.5);
+}
+
 float2 rotate2D(float2 v, float angle)
 {
     float s, c;
@@ -54,7 +60,7 @@ float3 sampleSprite(float val, float2 uv, float displayLength, float alignMode, 
     if (any(uv < 0.0) || any(uv >= 1.0))
         return kZeroColor;
 
-    val = abs(floor(val));
+    val = abs(val);
     float numActualDigits = max(1.0, (val < 1.0) ? 1.0 : floor(log10(val)) + 1.0);
     float currentDigitSlot = floor(uv.x * displayLength);
 
@@ -183,10 +189,12 @@ void lilGetDecalTexture(inout lilFragData fd LIL_SAMP_IN_FUNC(samp))
 {
     if (!_ActiveDecalTexture) return;
     
+    float roundedHeartRate = roundHalfUp(_FloatHeartRateC);
+    
     float2 offset = float2(_DecalPositionXVector.x, _DecalPositionYVector.x);    float2 scale = max(float2(_DecalScaleXVector.x, _DecalScaleYVector.x), float2(0.001, 0.001));
     
-    if (_UseHeartRateScaleTexture && _IntHeartRate > 0)
-        scale *= calculateHeartRateScale(float(_IntHeartRate));
+    if (_UseHeartRateScaleTexture && roundedHeartRate > 0)
+        scale *= calculateHeartRateScale(roundedHeartRate);
     
     float2 uv2 = invAffineTransform(fd.uvMain, offset, -_DecalRotation, scale);
     
@@ -201,7 +209,7 @@ void lilGetDecalTexture(inout lilFragData fd LIL_SAMP_IN_FUNC(samp))
         float emissionStrength;
         if (_UseHeartRateEmissionTexture)
         {
-            emissionStrength = calculateHeartRateEmission(float(_IntHeartRate), _HeartRateEmissionMinTexture, _HeartRateEmissionMaxTexture) * 100.0;
+            emissionStrength = calculateHeartRateEmission(roundedHeartRate, _HeartRateEmissionMinTexture, _HeartRateEmissionMaxTexture) * 100.0;
         }
         else
         {
@@ -217,13 +225,15 @@ void lilGetDecalNumber(inout lilFragData fd LIL_SAMP_IN_FUNC(samp))
 {
     if (!_ActiveDecalNumber) return;
     
+    float roundedHeartRate = roundHalfUp(_FloatHeartRateC);
+    
     float2 offset = float2(_TexPositionXVector.x, _TexPositionYVector.x);    float2 scale = max(float2(_TexScaleXVector.x, _TexScaleYVector.x), float2(0.001, 0.001));
     float2 numUv = invAffineTransform(fd.uvMain, offset, -_NumTexRotation, scale);
     
     float uvMask = lilIsIn0to1(numUv);
     if (uvMask <= 0.0) return;
-      float heartRateValue = round(float(_IntHeartRate));
-    float3 numberColor = sampleSprite(heartRateValue, numUv, _NumTexDisplaylength, float(_NumTexAlignment), _NumTexCharacterOffset);
+    
+    float3 numberColor = sampleSprite(roundedHeartRate, numUv, _NumTexDisplaylength, float(_NumTexAlignment), _NumTexCharacterOffset);
     
     float numberMask = (dot(numberColor, numberColor) > 0.000001) ? uvMask : 0.0;
     
@@ -235,7 +245,7 @@ void lilGetDecalNumber(inout lilFragData fd LIL_SAMP_IN_FUNC(samp))
         float emissionStrength;
         if (_UseHeartRateEmission)
         {
-            emissionStrength = calculateHeartRateEmission(float(_IntHeartRate), _HeartRateEmissionMin, _HeartRateEmissionMax) * 100.0;
+            emissionStrength = calculateHeartRateEmission(roundedHeartRate, _HeartRateEmissionMin, _HeartRateEmissionMax) * 100.0;
         }
         else
         {

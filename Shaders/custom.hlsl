@@ -31,7 +31,7 @@
     float4 _DecalScaleXVector; \
     float4 _DecalScaleYVector; \
     float _DecalRotation; \
-    int _IntHeartRate; \
+    float _FloatHeartRateC; \
     float _DecalNumberEmissionStrength; \
     float _DecalTextureEmissionStrength; \
     bool _UseHeartRateEmission; \

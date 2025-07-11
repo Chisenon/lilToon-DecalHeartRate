@@ -5,7 +5,7 @@ using UnityEngine;
 namespace lilToon
 {    public class DHBInspector : lilToonInspector
     {
-        MaterialProperty _IntHeartRate;
+        MaterialProperty _FloatHeartRateC;
         MaterialProperty _ActiveDecalNumber;
         MaterialProperty _ActiveDecalTexture;
         MaterialProperty _SpriteNumberTexture;
@@ -48,7 +48,7 @@ namespace lilToon
             isCustomShader = true;
             ReplaceToCustomShaders();
             isShowRenderMode = !material.shader.name.Contains("Optional");
-            _IntHeartRate = FindProperty("_IntHeartRate", props);
+            _FloatHeartRateC = FindProperty("_FloatHeartRateC", props);
             _ActiveDecalNumber = FindProperty("_ActiveDecalNumber", props);
             _ActiveDecalTexture = FindProperty("_ActiveDecalTexture", props);
             _SpriteNumberTexture = FindProperty("_SpriteNumberTexture", props);
@@ -93,7 +93,7 @@ namespace lilToon
                 EditorGUILayout.LabelField("Heart Rate Settings", customToggleFont);
                 EditorGUILayout.BeginVertical(boxInnerHalf);
                 EditorGUI.indentLevel++;
-                m_MaterialEditor.ShaderProperty(_IntHeartRate, GetLoc("Heart Rate (OSC)"));
+                m_MaterialEditor.ShaderProperty(_FloatHeartRateC, GetLoc("Heart Rate (OSC)"));
                 EditorGUILayout.HelpBox("Connect heart rate value via OSC for dynamic effects.", MessageType.Info);
                 EditorGUI.indentLevel--;
                 EditorGUILayout.EndVertical();
