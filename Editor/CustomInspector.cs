@@ -27,6 +27,7 @@ namespace lilToon
         MaterialProperty _NumTexDisplaylength;
         MaterialProperty _NumTexAlignment;
         MaterialProperty _NumTexCharacterOffset;
+        MaterialProperty _NumTexDigitSpacing;
         MaterialProperty _SyncDecalNumberTextureScale;
         MaterialProperty _SyncDecalTextureScale;
         MaterialProperty _DecalNumberEmissionStrength;
@@ -70,6 +71,7 @@ namespace lilToon
             _NumTexDisplaylength = FindProperty("_NumTexDisplaylength", props);
             _NumTexAlignment = FindProperty("_NumTexAlignment", props);
             _NumTexCharacterOffset = FindProperty("_NumTexCharacterOffset", props);
+            _NumTexDigitSpacing = FindProperty("_NumTexDigitSpacing", props);
             _SyncDecalNumberTextureScale = FindProperty("_SyncDecalNumberTextureScale", props);
             _SyncDecalTextureScale = FindProperty("_SyncDecalTextureScale", props);
             _DecalNumberEmissionStrength = FindProperty("_DecalNumberEmissionStrength", props);
@@ -85,7 +87,7 @@ namespace lilToon
         }
         protected override void DrawCustomProperties(Material material)
         {
-            isShowCustomProperties = Foldout(GetLoc("Decal Heart Rate"), GetLoc("Decal Menu"), isShowCustomProperties);
+            isShowCustomProperties = Foldout("Decal Heart Rate", "Decal Menu", isShowCustomProperties);
             if(isShowCustomProperties)
             {
                 // ===== OSC SETTINGS =====
@@ -93,7 +95,7 @@ namespace lilToon
                 EditorGUILayout.LabelField("Heart Rate Settings", customToggleFont);
                 EditorGUILayout.BeginVertical(boxInnerHalf);
                 EditorGUI.indentLevel++;
-                m_MaterialEditor.ShaderProperty(_FloatHeartRateC, GetLoc("Heart Rate (OSC)"));
+                m_MaterialEditor.ShaderProperty(_FloatHeartRateC, "Heart Rate (OSC)");
                 EditorGUILayout.HelpBox("Connect heart rate value via OSC for dynamic effects.", MessageType.Info);
                 EditorGUI.indentLevel--;
                 EditorGUILayout.EndVertical();
@@ -104,15 +106,125 @@ namespace lilToon
                 // ===== NUMBER DECAL =====
                 EditorGUILayout.BeginVertical(boxOuter);
                 m_MaterialEditor.ShaderProperty(_ActiveDecalNumber, "Number Decal");
-                EditorGUILayout.BeginVertical(boxInnerHalf);
 
                 if(_ActiveDecalNumber.floatValue == 1)
                 {
-                    // Texture Settings
+                    EditorGUILayout.BeginVertical(boxInnerHalf);
+
                     EditorGUILayout.LabelField("Texture", EditorStyles.boldLabel);
                     EditorGUI.indentLevel++;
                     m_MaterialEditor.TexturePropertySingleLine(new GUIContent("Number Texture"), _SpriteNumberTexture, _SpriteNumberTextureColor);
+
                     m_MaterialEditor.ShaderProperty(_NumberTextureBlendMode, "Blend Mode");
+
+                    string[] samplePaths = new string[] {
+                        "Packages\\net.chisenon.liltoon-decalheartrate\\Texture\\NumberTexture.png",
+                        "Assets\\!_ChiseNote\\lilToon-DecalHeartRate\\Texture\\NumberTexture.png"
+                    };
+                    Texture2D sampleTexFound = null;
+                    string sampleFoundPath = null;
+                    foreach (var p in samplePaths)
+                    {
+                        var t = AssetDatabase.LoadAssetAtPath<Texture2D>(p);
+                        if (t != null)
+                        {
+                            sampleTexFound = t;
+                            sampleFoundPath = p;
+                            break;
+                        }
+                    }
+
+                    EditorGUILayout.BeginVertical();
+                    if (sampleTexFound != null)
+                    {
+                        if (GUILayout.Button("Set Sample Texture"))
+                        {
+                            foreach (var obj in m_MaterialEditor.targets)
+                            {
+                                var mat = obj as Material;
+                                if (mat != null)
+                                {
+                                    Undo.RecordObject(mat, "Assign Sample Number Texture");
+                                    mat.SetTexture("_SpriteNumberTexture", sampleTexFound);
+                                    EditorUtility.SetDirty(mat);
+                                }
+                            }
+                        }
+                    }
+                    else
+                    {
+                        EditorGUI.BeginDisabledGroup(true);
+                        GUILayout.Button("Sample Texture Not Found");
+                        EditorGUI.EndDisabledGroup();
+                    }
+
+                    string[] prefabPaths = new string[] {
+                        "Packages\\net.chisenon.font2tex\\Font2Tex.prefab",
+                        "Assets\\!_ChiseNote\\Font2Texture\\Font2Tex.prefab"
+                    };
+                    GameObject prefab = null;
+                    string prefabFoundPath = null;
+                    foreach (var pp in prefabPaths)
+                    {
+                        prefab = AssetDatabase.LoadAssetAtPath<GameObject>(pp);
+                        if (prefab != null)
+                        {
+                            prefabFoundPath = pp;
+                            break;
+                        }
+                    }
+
+                    if (prefab != null)
+                    {
+                        if (GUILayout.Button("Spawn Texture Generator"))
+                        {
+                            GameObject existingInstance = null;
+                            for (int si = 0; si < UnityEngine.SceneManagement.SceneManager.sceneCount; si++)
+                            {
+                                var scene = UnityEngine.SceneManagement.SceneManager.GetSceneAt(si);
+                                if (!scene.isLoaded) continue;
+                                var roots = scene.GetRootGameObjects();
+                                foreach (var root in roots)
+                                {
+                                    var transforms = root.GetComponentsInChildren<Transform>(true);
+                                    foreach (var t in transforms)
+                                    {
+                                        var src = PrefabUtility.GetCorrespondingObjectFromSource(t.gameObject);
+                                        if (src == prefab)
+                                        {
+                                            existingInstance = t.gameObject;
+                                            break;
+                                        }
+                                    }
+                                    if (existingInstance != null) break;
+                                }
+                                if (existingInstance != null) break;
+                            }
+
+                            if (existingInstance != null)
+                            {
+                                Selection.activeGameObject = existingInstance;
+                                EditorGUIUtility.PingObject(existingInstance);
+                                EditorUtility.DisplayDialog("Already exists", "A Font2Tex prefab instance already exists in the hierarchy. Selecting existing instance.", "OK");
+                            }
+                            else
+                            {
+                                var instance = PrefabUtility.InstantiatePrefab(prefab) as GameObject;
+                                if (instance != null)
+                                {
+                                    Undo.RegisterCreatedObjectUndo(instance, "Spawn Texture Generator");
+                                    Selection.activeGameObject = instance;
+                                }
+                            }
+                        }
+                    }
+                    else
+                    {
+                        EditorGUI.BeginDisabledGroup(true);
+                        GUILayout.Button("Texture Generator Not Found");
+                        EditorGUI.EndDisabledGroup();
+                    }
+                    EditorGUILayout.EndVertical();
                     EditorGUI.indentLevel--;
 
                     DrawLine();
@@ -167,7 +279,9 @@ namespace lilToon
                     m_MaterialEditor.ShaderProperty(_NumTexDisplaylength, "Display Length");
                     m_MaterialEditor.ShaderProperty(_NumTexAlignment, "Alignment");
                     m_MaterialEditor.ShaderProperty(_NumTexCharacterOffset, "Character Offset");
-                    EditorGUI.indentLevel--;                    DrawLine();
+                    m_MaterialEditor.ShaderProperty(_NumTexDigitSpacing, "Digit Spacing");
+                    EditorGUI.indentLevel--;
+                    DrawLine();
 
                     // Emission Settings
                     EditorGUILayout.LabelField("Emission", EditorStyles.boldLabel);
@@ -185,9 +299,10 @@ namespace lilToon
                         EditorGUI.indentLevel--;
                     }
                     EditorGUI.indentLevel--;
+
+                    EditorGUILayout.EndVertical();
                 }
                 
-                EditorGUILayout.EndVertical();
                 EditorGUILayout.EndVertical();
 
                 EditorGUILayout.Space();
@@ -195,10 +310,11 @@ namespace lilToon
                 // ===== TEXTURE DECAL =====
                 EditorGUILayout.BeginVertical(boxOuter);
                 m_MaterialEditor.ShaderProperty(_ActiveDecalTexture, "Texture Decal");
-                EditorGUILayout.BeginVertical(boxInnerHalf);
                 
                 if(_ActiveDecalTexture.floatValue == 1)
                 {
+                    EditorGUILayout.BeginVertical(boxInnerHalf);
+                    
                     // Texture Settings
                     EditorGUILayout.LabelField("Texture", EditorStyles.boldLabel);
                     EditorGUI.indentLevel++;
@@ -280,7 +396,9 @@ namespace lilToon
                         EditorGUI.indentLevel--;
                     }
                     EditorGUI.indentLevel--;
-                }                EditorGUILayout.EndVertical();
+                    
+                    EditorGUILayout.EndVertical();
+                }
                 EditorGUILayout.EndVertical();
             }
         }
