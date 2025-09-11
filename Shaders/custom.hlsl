@@ -26,6 +26,7 @@
     float _NumTexDisplaylength; \
     int _NumTexAlignment; \
     float _NumTexCharacterOffset; \
+    float _NumTexDigitSpacing; \
     float4 _DecalPositionXVector; \
     float4 _DecalPositionYVector; \
     float4 _DecalScaleXVector; \

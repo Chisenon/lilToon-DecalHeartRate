@@ -20,6 +20,7 @@ _FloatHeartRateC                         ("HeartRate", float) = 0
 [Enum(ZERO FILL, 0, SHIFT RIGHT, 1, SHIFT LEFT, 2)]
                 _NumTexAlignment            ("Align of Elapsed Time", Int) = 0
                 _NumTexCharacterOffset      ("Character Offset", Range(-1.0, 1.0)) = 0.0
+                _NumTexDigitSpacing         ("Digit Spacing", Range(0.1, 1.0)) = 1.0
 [lilToggle]     _SyncDecalNumberTextureScale ("Sync Scale", Int) = 0
                 _DecalNumberEmissionStrength ("Emission Strength", Range(0, 100)) = 0
 
