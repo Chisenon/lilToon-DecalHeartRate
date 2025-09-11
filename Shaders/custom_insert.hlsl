@@ -8,7 +8,6 @@ static const float kEmissionScale = 0.01;
 static const float2 kUvCenter = float2(0.5, 0.5);
 static const float3 kZeroColor = float3(0.0, 0.0, 0.0);
 
-// 通常の四捨五入関数（0.5は常に切り上げ）
 float roundHalfUp(float value)
 {
     return floor(value + 0.5);
@@ -55,65 +54,131 @@ float2 calculateSpriteUV(float localUvX, float spriteColumnIndex, float characte
     return float2(lerp(sampleStartU, sampleEndU, localUvX), sampleStartU);
 }
 
-float3 sampleSprite(float val, float2 uv, float displayLength, float alignMode, float characterOffset)
+float3 sampleSpriteWithSpacing(float val, float2 uv, float displayLength, float alignMode, float characterOffset, float digitSpacing)
 {
     if (any(uv < 0.0) || any(uv >= 1.0))
         return kZeroColor;
 
     val = abs(val);
     float numActualDigits = max(1.0, (val < 1.0) ? 1.0 : floor(log10(val)) + 1.0);
-    float currentDigitSlot = floor(uv.x * displayLength);
-
-    if (currentDigitSlot < 0.0 || currentDigitSlot >= displayLength)
-        return kZeroColor;
-
-    float digitToRender;
-    bool renderThisDigit = false;
-
-    if (alignMode == 0.0)
+    
+    float effectiveDigits = (alignMode == 1.0 || alignMode == 2.0) ? numActualDigits : displayLength;
+    float digitWidth = 1.0 / displayLength;
+    
+    float gapReduction = 1.0 - digitSpacing;
+    float newDigitSpacing = digitWidth * digitSpacing;
+    float totalWidth = effectiveDigits * digitWidth - (effectiveDigits - 1) * digitWidth * gapReduction;
+    float startOffset = (1.0 - totalWidth) * 0.5;
+    
+    float3 finalColor = kZeroColor;
+    float totalAlpha = 0.0;
+    
+    [unroll(6)]
+    for (int i = 0; i < 6; i++)
     {
-        float power = pow(10.0, displayLength - 1.0 - currentDigitSlot);
-        digitToRender = calcDigit(val, power);
-        renderThisDigit = true;
-    }
-    else if (alignMode == 1.0)
-    {
-        float emptySlotsOnLeft = max(0.0, displayLength - numActualDigits);
-        if (currentDigitSlot >= emptySlotsOnLeft)
+        if (float(i) >= displayLength)
+            continue;
+            
+        float digitIndex = 0.0;
+        bool isValidDigit = false;
+        float currentDigitSlot = float(i);
+        
+        if (alignMode == 0.0)
         {
-            float effectiveDigitIndex = currentDigitSlot - emptySlotsOnLeft;
-            float power = pow(10.0, numActualDigits - 1.0 - effectiveDigitIndex);
-            digitToRender = calcDigit(val, power);
-            renderThisDigit = true;
+            digitIndex = float(i);
+            isValidDigit = true;
+        }
+        else if (alignMode == 1.0)
+        {
+            float emptySlotsOnLeft = max(0.0, displayLength - numActualDigits);
+            if (float(i) >= emptySlotsOnLeft)
+            {
+                digitIndex = float(i) - emptySlotsOnLeft;
+                isValidDigit = true;
+            }
+        }
+        else
+        {
+            if (float(i) < numActualDigits)
+            {
+                digitIndex = float(i);
+                isValidDigit = true;
+            }
+        }
+        
+        if (isValidDigit)
+        {
+            float newDigitStart = startOffset + digitIndex * newDigitSpacing;
+            float newDigitEnd = newDigitStart + digitWidth;
+            
+            if (uv.x >= newDigitStart && uv.x < newDigitEnd)
+            {
+                float localUvX = (uv.x - newDigitStart) / digitWidth;
+                
+                float digitToRender;
+                bool renderThisDigit = false;
+
+                if (alignMode == 0.0)
+                {
+                    float power = pow(10.0, displayLength - 1.0 - currentDigitSlot);
+                    digitToRender = calcDigit(val, power);
+                    renderThisDigit = true;
+                }
+                else if (alignMode == 1.0)
+                {
+                    float emptySlotsOnLeft = max(0.0, displayLength - numActualDigits);
+                    if (currentDigitSlot >= emptySlotsOnLeft)
+                    {
+                        float effectiveDigitIndex = currentDigitSlot - emptySlotsOnLeft;
+                        float power = pow(10.0, numActualDigits - 1.0 - effectiveDigitIndex);
+                        digitToRender = calcDigit(val, power);
+                        renderThisDigit = true;
+                    }
+                }
+                else
+                {
+                    if (currentDigitSlot < numActualDigits)
+                    {
+                        float power = pow(10.0, numActualDigits - 1.0 - currentDigitSlot);
+                        digitToRender = calcDigit(val, power);
+                        renderThisDigit = true;
+                    }
+                }
+
+                if (renderThisDigit)
+                {
+                    float2 spriteUvData = calculateSpriteUV(localUvX, digitToRender, characterOffset);
+                    
+                    if (spriteUvData.x >= 0.0 && digitToRender < kColumns)
+                    {
+                        float2 spriteUv = float2(spriteUvData.x, uv.y);
+                        float4 texSample = LIL_SAMPLE_2D(_SpriteNumberTexture, sampler_SpriteNumberTexture, spriteUv);
+                        
+                        if (texSample.a >= kAlphaThreshold)
+                        {
+                            float alpha = texSample.a;
+                            float3 digitColor = float3(1.0, 1.0, 1.0);
+                            finalColor = lerp(finalColor, digitColor, alpha * (1.0 - totalAlpha));
+                            totalAlpha = saturate(totalAlpha + alpha);
+                            
+                            if (totalAlpha >= 0.99)
+                                break;
+                        }
+                    }
+                }
+            }
         }
     }
-    else
-    {
-        if (currentDigitSlot < numActualDigits)
-        {
-            float power = pow(10.0, numActualDigits - 1.0 - currentDigitSlot);
-            digitToRender = calcDigit(val, power);
-            renderThisDigit = true;
-        }
-    }
-
-    if (!renderThisDigit)
-        return kZeroColor;    float localUvX = frac(uv.x * displayLength);
-    float2 spriteUvData = calculateSpriteUV(localUvX, digitToRender, characterOffset);
     
-    if (spriteUvData.x < 0.0)
-        return kZeroColor;
-    
-    float2 spriteUv = float2(spriteUvData.x, uv.y);
-    
-    if (digitToRender >= kColumns)
-        return kZeroColor;
-
-    float4 texSample = LIL_SAMPLE_2D(_SpriteNumberTexture, sampler_SpriteNumberTexture, spriteUv);
-    return (texSample.a < kAlphaThreshold) ? kZeroColor : texSample.rgb;
+    return finalColor;
 }
 
-float3 sampleSpriteSigned(float val, float2 uv, float displayLength, float align, float characterOffset)
+float3 sampleSprite(float val, float2 uv, float displayLength, float alignMode, float characterOffset)
+{
+    return sampleSpriteWithSpacing(val, uv, displayLength, alignMode, characterOffset, 1.0);
+}
+
+float3 sampleSpriteSignedWithSpacing(float val, float2 uv, float displayLength, float align, float characterOffset, float digitSpacing)
 {
     if (any(uv < 0.0) || any(uv >= 1.0))
         return kZeroColor;
@@ -125,7 +190,7 @@ float3 sampleSpriteSigned(float val, float2 uv, float displayLength, float align
     if (uv.x >= singleCharDisplayWidth) 
     { 
         float2 numberPartUv = float2(saturate((uv.x - singleCharDisplayWidth) / (1.0 - singleCharDisplayWidth)), uv.y);
-        return sampleSprite(abs(val), numberPartUv, originalDisplayLength, align, characterOffset);
+        return sampleSpriteWithSpacing(abs(val), numberPartUv, originalDisplayLength, align, characterOffset, digitSpacing);
     } 
     else if (val < 0.0) 
     { 
@@ -138,10 +203,15 @@ float3 sampleSpriteSigned(float val, float2 uv, float displayLength, float align
         float2 spriteUv = float2(spriteUvData.x, uv.y);
         float4 tex = LIL_SAMPLE_2D(_SpriteNumberTexture, sampler_SpriteNumberTexture, spriteUv);
         
-        return (tex.a < kAlphaThreshold) ? kZeroColor : tex.rgb;
+        return (tex.a < kAlphaThreshold) ? kZeroColor : float3(1.0, 1.0, 1.0);
     } 
     
     return kZeroColor;
+}
+
+float3 sampleSpriteSigned(float val, float2 uv, float displayLength, float align, float characterOffset)
+{
+    return sampleSpriteSignedWithSpacing(val, uv, displayLength, align, characterOffset, 1.0);
 }
 
 float calculateHeartRateEmission(float heartRate, float minIntensity, float maxIntensity)
@@ -233,7 +303,7 @@ void lilGetDecalNumber(inout lilFragData fd LIL_SAMP_IN_FUNC(samp))
     float uvMask = lilIsIn0to1(numUv);
     if (uvMask <= 0.0) return;
     
-    float3 numberColor = sampleSprite(roundedHeartRate, numUv, _NumTexDisplaylength, float(_NumTexAlignment), _NumTexCharacterOffset);
+    float3 numberColor = sampleSpriteWithSpacing(roundedHeartRate, numUv, _NumTexDisplaylength, float(_NumTexAlignment), _NumTexCharacterOffset, _NumTexDigitSpacing);
     
     float numberMask = (dot(numberColor, numberColor) > 0.000001) ? uvMask : 0.0;
     
