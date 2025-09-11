@@ -12,7 +12,7 @@ lilToonベースの心拍数に特化したDecalShader
 ## 必要要件
 
 - **Unity**： 2019.4以降
-- **[lilToon](https://lilxyzw.github.io/lilToon/)**： v1.8.0以降
+- **[lilToon](https://lilxyzw.github.io/lilToon/)**： v2.0.0以降
 - **VRChat SDK**： 3.0以降（VRChat使用時）
 
 ## 機能
