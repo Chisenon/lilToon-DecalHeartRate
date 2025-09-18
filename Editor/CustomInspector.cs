@@ -391,7 +391,16 @@ namespace lilToon
                     if(_UseHeartRateScaleTexture.floatValue == 1)
                     {
                         EditorGUI.indentLevel++;
-                        m_MaterialEditor.ShaderProperty(_HeartRateScaleIntensity, "Scale Intensity");
+                        
+                        EditorGUI.BeginChangeCheck();
+                        float currentValue = _HeartRateScaleIntensity.floatValue;
+                        float displayValue = currentValue + 1.0f;
+                        float newDisplayValue = EditorGUILayout.Slider("Heart Rate Scale", displayValue, 1.0f, 2.0f);
+                        if(EditorGUI.EndChangeCheck())
+                        {
+                            _HeartRateScaleIntensity.floatValue = newDisplayValue - 1.0f;
+                        }
+                        
                         EditorGUILayout.HelpBox("Texture will pulse and bounce with heart rate using damped oscillation.", MessageType.Info);
                         EditorGUI.indentLevel--;
                     }
