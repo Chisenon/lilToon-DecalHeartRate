@@ -35,6 +35,8 @@
     float _FloatHeartRateC; \
     float _DecalNumberEmissionStrength; \
     float _DecalTextureEmissionStrength; \
+    float4 _DecalNumberEmissionColor; \
+    float4 _DecalTextureEmissionColor; \
     bool _UseHeartRateEmission; \
     float _HeartRateEmissionMin; \
     float _HeartRateEmissionMax; \
@@ -49,7 +51,11 @@
     TEXTURE2D(_SpriteNumberTexture); \
     SAMPLER(sampler_SpriteNumberTexture); \
     TEXTURE2D(_DecalTexture); \
-    SAMPLER(sampler_DecalTexture);
+    SAMPLER(sampler_DecalTexture); \
+    TEXTURE2D(_DecalNumberEmissionMask); \
+    SAMPLER(sampler_DecalNumberEmissionMask); \
+    TEXTURE2D(_DecalTextureEmissionMask); \
+    SAMPLER(sampler_DecalTextureEmissionMask);
 
 // Add vertex shader input
 //#define LIL_REQUIRE_APP_POSITION

@@ -40,9 +40,18 @@ namespace lilToon
         MaterialProperty _HeartRateEmissionMaxTexture;
         MaterialProperty _UseHeartRateScaleTexture;
         MaterialProperty _HeartRateScaleIntensity;
+        
+        // Number Decal Emission Mask and Color
+        MaterialProperty _DecalNumberEmissionMask;
+        MaterialProperty _DecalNumberEmissionColor;
+        
+        // Texture Decal Emission Mask and Color
+        MaterialProperty _DecalTextureEmissionMask;
+        MaterialProperty _DecalTextureEmissionColor;
 
         private static bool isShowCustomProperties;
         private const string shaderName = "ChiseNote/DecalHeartRate";
+
 
         protected override void LoadCustomProperties(MaterialProperty[] props, Material material)
         {
@@ -84,6 +93,12 @@ namespace lilToon
             _HeartRateEmissionMaxTexture = FindProperty("_HeartRateEmissionMaxTexture", props);
             _UseHeartRateScaleTexture = FindProperty("_UseHeartRateScaleTexture", props);
             _HeartRateScaleIntensity = FindProperty("_HeartRateScaleIntensity", props);
+            
+            // Load new emission properties
+            _DecalNumberEmissionMask = FindProperty("_DecalNumberEmissionMask", props);
+            _DecalNumberEmissionColor = FindProperty("_DecalNumberEmissionColor", props);
+            _DecalTextureEmissionMask = FindProperty("_DecalTextureEmissionMask", props);
+            _DecalTextureEmissionColor = FindProperty("_DecalTextureEmissionColor", props);
         }
         protected override void DrawCustomProperties(Material material)
         {
@@ -286,12 +301,17 @@ namespace lilToon
                     // Emission Settings
                     EditorGUILayout.LabelField("Emission", EditorStyles.boldLabel);
                     EditorGUI.indentLevel++;
+                    // Emission Mask and Color
+                    EditorGUILayout.Space(3);
+                    m_MaterialEditor.TexturePropertySingleLine(new GUIContent("色/マスク", "Controls which areas emit light"), _DecalNumberEmissionMask, _DecalNumberEmissionColor);
+                    EditorGUILayout.Space(3);
                     m_MaterialEditor.ShaderProperty(_DecalNumberEmissionStrength, "Basic Emission Strength");
-                    
                     EditorGUILayout.Space(3);
                     m_MaterialEditor.ShaderProperty(_UseHeartRateEmission, "Heart Rate Emission");
+                    // If heart-rate-driven emission is enabled, disable basic emission strength
                     if(_UseHeartRateEmission.floatValue == 1)
                     {
+                        _DecalNumberEmissionStrength.floatValue = 0;
                         EditorGUI.indentLevel++;
                         m_MaterialEditor.ShaderProperty(_HeartRateEmissionMin, "Min Intensity");
                         m_MaterialEditor.ShaderProperty(_HeartRateEmissionMax, "Max Intensity");
@@ -369,12 +389,17 @@ namespace lilToon
                     // Emission Settings
                     EditorGUILayout.LabelField("Emission", EditorStyles.boldLabel);
                     EditorGUI.indentLevel++;
+                    // Emission Mask and Color
+                    EditorGUILayout.Space(3);
+                    m_MaterialEditor.TexturePropertySingleLine(new GUIContent("色/マスク", "Controls which areas emit light"), _DecalTextureEmissionMask, _DecalTextureEmissionColor);
+                    EditorGUILayout.Space(3);
                     m_MaterialEditor.ShaderProperty(_DecalTextureEmissionStrength, "Basic Emission Strength");
-                    
                     EditorGUILayout.Space(3);
                     m_MaterialEditor.ShaderProperty(_UseHeartRateEmissionTexture, "Heart Rate Emission");
+                    // If heart-rate-driven emission is enabled for texture, disable basic emission strength
                     if(_UseHeartRateEmissionTexture.floatValue == 1)
                     {
+                        _DecalTextureEmissionStrength.floatValue = 0;
                         EditorGUI.indentLevel++;
                         m_MaterialEditor.ShaderProperty(_HeartRateEmissionMinTexture, "Min Intensity");
                         m_MaterialEditor.ShaderProperty(_HeartRateEmissionMaxTexture, "Max Intensity");
