@@ -134,7 +134,7 @@ namespace lilToon
 
                     string[] samplePaths = new string[] {
                         "Packages\\net.chisenon.liltoon-decalheartrate\\Texture\\NumberTexture.png",
-                        "Assets\\!_ChiseNote\\lilToon-DecalHeartRate\\Texture\\NumberTexture.png"
+                        "Assets\\ChiseNote\\lilToon-DecalHeartRate\\Texture\\NumberTexture.png"
                     };
                     Texture2D sampleTexFound = null;
                     string sampleFoundPath = null;
@@ -175,7 +175,7 @@ namespace lilToon
 
                     string[] prefabPaths = new string[] {
                         "Packages\\net.chisenon.font2tex\\Font2Tex.prefab",
-                        "Assets\\!_ChiseNote\\Font2Texture\\Font2Tex.prefab"
+                        "Assets\\ChiseNote\\Font2Texture\\Font2Tex.prefab"
                     };
                     GameObject prefab = null;
                     string prefabFoundPath = null;
