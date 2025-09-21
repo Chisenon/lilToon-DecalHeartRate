@@ -303,12 +303,11 @@ namespace lilToon
                     EditorGUI.indentLevel++;
                     // Emission Mask and Color
                     EditorGUILayout.Space(3);
-                    m_MaterialEditor.TexturePropertySingleLine(new GUIContent("色/マスク", "Controls which areas emit light"), _DecalNumberEmissionMask, _DecalNumberEmissionColor);
+                    m_MaterialEditor.TexturePropertySingleLine(new GUIContent("Color / Mask", "Controls which areas emit light"), _DecalNumberEmissionMask, _DecalNumberEmissionColor);
                     EditorGUILayout.Space(3);
-                    m_MaterialEditor.ShaderProperty(_DecalNumberEmissionStrength, "Basic Emission Strength");
+                    m_MaterialEditor.ShaderProperty(_DecalNumberEmissionStrength, "Basic Emission Power");
                     EditorGUILayout.Space(3);
                     m_MaterialEditor.ShaderProperty(_UseHeartRateEmission, "Heart Rate Emission");
-                    // If heart-rate-driven emission is enabled, disable basic emission strength
                     if(_UseHeartRateEmission.floatValue == 1)
                     {
                         _DecalNumberEmissionStrength.floatValue = 0;
@@ -391,18 +390,18 @@ namespace lilToon
                     EditorGUI.indentLevel++;
                     // Emission Mask and Color
                     EditorGUILayout.Space(3);
-                    m_MaterialEditor.TexturePropertySingleLine(new GUIContent("色/マスク", "Controls which areas emit light"), _DecalTextureEmissionMask, _DecalTextureEmissionColor);
+                    m_MaterialEditor.TexturePropertySingleLine(new GUIContent("Color / Mask", "Controls which areas emit light"), _DecalTextureEmissionMask, _DecalTextureEmissionColor);
                     EditorGUILayout.Space(3);
-                    m_MaterialEditor.ShaderProperty(_DecalTextureEmissionStrength, "Basic Emission Strength");
+                    m_MaterialEditor.ShaderProperty(_DecalTextureEmissionStrength, "Basic Emission Power");
                     EditorGUILayout.Space(3);
                     m_MaterialEditor.ShaderProperty(_UseHeartRateEmissionTexture, "Heart Rate Emission");
-                    // If heart-rate-driven emission is enabled for texture, disable basic emission strength
                     if(_UseHeartRateEmissionTexture.floatValue == 1)
                     {
                         _DecalTextureEmissionStrength.floatValue = 0;
                         EditorGUI.indentLevel++;
                         m_MaterialEditor.ShaderProperty(_HeartRateEmissionMinTexture, "Min Intensity");
                         m_MaterialEditor.ShaderProperty(_HeartRateEmissionMaxTexture, "Max Intensity");
+                        EditorGUILayout.HelpBox("Numbers will pulse with heart rate rhythm.", MessageType.Info);
                         EditorGUI.indentLevel--;
                     }
                     EditorGUI.indentLevel--;
