@@ -40,9 +40,18 @@ namespace lilToon
         MaterialProperty _HeartRateEmissionMaxTexture;
         MaterialProperty _UseHeartRateScaleTexture;
         MaterialProperty _HeartRateScaleIntensity;
+        
+        // Number Decal Emission Mask and Color
+        MaterialProperty _DecalNumberEmissionMask;
+        MaterialProperty _DecalNumberEmissionColor;
+        
+        // Texture Decal Emission Mask and Color
+        MaterialProperty _DecalTextureEmissionMask;
+        MaterialProperty _DecalTextureEmissionColor;
 
         private static bool isShowCustomProperties;
         private const string shaderName = "ChiseNote/DecalHeartRate";
+
 
         protected override void LoadCustomProperties(MaterialProperty[] props, Material material)
         {
@@ -84,6 +93,12 @@ namespace lilToon
             _HeartRateEmissionMaxTexture = FindProperty("_HeartRateEmissionMaxTexture", props);
             _UseHeartRateScaleTexture = FindProperty("_UseHeartRateScaleTexture", props);
             _HeartRateScaleIntensity = FindProperty("_HeartRateScaleIntensity", props);
+            
+            // Load new emission properties
+            _DecalNumberEmissionMask = FindProperty("_DecalNumberEmissionMask", props);
+            _DecalNumberEmissionColor = FindProperty("_DecalNumberEmissionColor", props);
+            _DecalTextureEmissionMask = FindProperty("_DecalTextureEmissionMask", props);
+            _DecalTextureEmissionColor = FindProperty("_DecalTextureEmissionColor", props);
         }
         protected override void DrawCustomProperties(Material material)
         {
@@ -119,7 +134,7 @@ namespace lilToon
 
                     string[] samplePaths = new string[] {
                         "Packages\\net.chisenon.liltoon-decalheartrate\\Texture\\NumberTexture.png",
-                        "Assets\\!_ChiseNote\\lilToon-DecalHeartRate\\Texture\\NumberTexture.png"
+                        "Assets\\ChiseNote\\lilToon-DecalHeartRate\\Texture\\NumberTexture.png"
                     };
                     Texture2D sampleTexFound = null;
                     string sampleFoundPath = null;
@@ -160,7 +175,7 @@ namespace lilToon
 
                     string[] prefabPaths = new string[] {
                         "Packages\\net.chisenon.font2tex\\Font2Tex.prefab",
-                        "Assets\\!_ChiseNote\\Font2Texture\\Font2Tex.prefab"
+                        "Assets\\ChiseNote\\Font2Texture\\Font2Tex.prefab"
                     };
                     GameObject prefab = null;
                     string prefabFoundPath = null;
@@ -286,12 +301,16 @@ namespace lilToon
                     // Emission Settings
                     EditorGUILayout.LabelField("Emission", EditorStyles.boldLabel);
                     EditorGUI.indentLevel++;
-                    m_MaterialEditor.ShaderProperty(_DecalNumberEmissionStrength, "Basic Emission Strength");
-                    
+                    // Emission Mask and Color
+                    EditorGUILayout.Space(3);
+                    m_MaterialEditor.TexturePropertySingleLine(new GUIContent("Color / Mask", "Controls which areas emit light"), _DecalNumberEmissionMask, _DecalNumberEmissionColor);
+                    EditorGUILayout.Space(3);
+                    m_MaterialEditor.ShaderProperty(_DecalNumberEmissionStrength, "Basic Emission Power");
                     EditorGUILayout.Space(3);
                     m_MaterialEditor.ShaderProperty(_UseHeartRateEmission, "Heart Rate Emission");
                     if(_UseHeartRateEmission.floatValue == 1)
                     {
+                        _DecalNumberEmissionStrength.floatValue = 0;
                         EditorGUI.indentLevel++;
                         m_MaterialEditor.ShaderProperty(_HeartRateEmissionMin, "Min Intensity");
                         m_MaterialEditor.ShaderProperty(_HeartRateEmissionMax, "Max Intensity");
@@ -369,15 +388,20 @@ namespace lilToon
                     // Emission Settings
                     EditorGUILayout.LabelField("Emission", EditorStyles.boldLabel);
                     EditorGUI.indentLevel++;
-                    m_MaterialEditor.ShaderProperty(_DecalTextureEmissionStrength, "Basic Emission Strength");
-                    
+                    // Emission Mask and Color
+                    EditorGUILayout.Space(3);
+                    m_MaterialEditor.TexturePropertySingleLine(new GUIContent("Color / Mask", "Controls which areas emit light"), _DecalTextureEmissionMask, _DecalTextureEmissionColor);
+                    EditorGUILayout.Space(3);
+                    m_MaterialEditor.ShaderProperty(_DecalTextureEmissionStrength, "Basic Emission Power");
                     EditorGUILayout.Space(3);
                     m_MaterialEditor.ShaderProperty(_UseHeartRateEmissionTexture, "Heart Rate Emission");
                     if(_UseHeartRateEmissionTexture.floatValue == 1)
                     {
+                        _DecalTextureEmissionStrength.floatValue = 0;
                         EditorGUI.indentLevel++;
                         m_MaterialEditor.ShaderProperty(_HeartRateEmissionMinTexture, "Min Intensity");
                         m_MaterialEditor.ShaderProperty(_HeartRateEmissionMaxTexture, "Max Intensity");
+                        EditorGUILayout.HelpBox("Numbers will pulse with heart rate rhythm.", MessageType.Info);
                         EditorGUI.indentLevel--;
                     }
                     EditorGUI.indentLevel--;
@@ -391,7 +415,16 @@ namespace lilToon
                     if(_UseHeartRateScaleTexture.floatValue == 1)
                     {
                         EditorGUI.indentLevel++;
-                        m_MaterialEditor.ShaderProperty(_HeartRateScaleIntensity, "Scale Intensity");
+                        
+                        EditorGUI.BeginChangeCheck();
+                        float currentValue = _HeartRateScaleIntensity.floatValue;
+                        float displayValue = currentValue + 1.0f;
+                        float newDisplayValue = EditorGUILayout.Slider("Heart Rate Scale", displayValue, 1.0f, 2.0f);
+                        if(EditorGUI.EndChangeCheck())
+                        {
+                            _HeartRateScaleIntensity.floatValue = newDisplayValue - 1.0f;
+                        }
+                        
                         EditorGUILayout.HelpBox("Texture will pulse and bounce with heart rate using damped oscillation.", MessageType.Info);
                         EditorGUI.indentLevel--;
                     }
