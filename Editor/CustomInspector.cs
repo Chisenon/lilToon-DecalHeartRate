@@ -44,10 +44,12 @@ namespace lilToon
         // Number Decal Emission Mask and Color
         MaterialProperty _DecalNumberEmissionMask;
         MaterialProperty _DecalNumberEmissionColor;
+        MaterialProperty _DecalNumberMainColorPower;
         
         // Texture Decal Emission Mask and Color
         MaterialProperty _DecalTextureEmissionMask;
         MaterialProperty _DecalTextureEmissionColor;
+        MaterialProperty _DecalTextureMainColorPower;
 
         private static bool isShowCustomProperties;
         private const string shaderName = "ChiseNote/DecalHeartRate";
@@ -97,8 +99,10 @@ namespace lilToon
             // Load new emission properties
             _DecalNumberEmissionMask = FindProperty("_DecalNumberEmissionMask", props);
             _DecalNumberEmissionColor = FindProperty("_DecalNumberEmissionColor", props);
+            _DecalNumberMainColorPower = FindProperty("_DecalNumberMainColorPower", props);
             _DecalTextureEmissionMask = FindProperty("_DecalTextureEmissionMask", props);
             _DecalTextureEmissionColor = FindProperty("_DecalTextureEmissionColor", props);
+            _DecalTextureMainColorPower = FindProperty("_DecalTextureMainColorPower", props);
         }
         protected override void DrawCustomProperties(Material material)
         {
@@ -307,6 +311,9 @@ namespace lilToon
                     EditorGUILayout.Space(3);
                     m_MaterialEditor.ShaderProperty(_DecalNumberEmissionStrength, "Basic Emission Power");
                     EditorGUILayout.Space(3);
+                    // Main Color Power: blend emission color from black to the chosen color (0..1)
+                    m_MaterialEditor.ShaderProperty(_DecalNumberMainColorPower, "Main Color Power");
+                    EditorGUILayout.Space(3);
                     m_MaterialEditor.ShaderProperty(_UseHeartRateEmission, "Heart Rate Emission");
                     if(_UseHeartRateEmission.floatValue == 1)
                     {
@@ -393,6 +400,9 @@ namespace lilToon
                     m_MaterialEditor.TexturePropertySingleLine(new GUIContent("Color / Mask", "Controls which areas emit light"), _DecalTextureEmissionMask, _DecalTextureEmissionColor);
                     EditorGUILayout.Space(3);
                     m_MaterialEditor.ShaderProperty(_DecalTextureEmissionStrength, "Basic Emission Power");
+                    EditorGUILayout.Space(3);
+                    // Main Color Power: blend emission color from black to the chosen color (0..1)
+                    m_MaterialEditor.ShaderProperty(_DecalTextureMainColorPower, "Main Color Power");
                     EditorGUILayout.Space(3);
                     m_MaterialEditor.ShaderProperty(_UseHeartRateEmissionTexture, "Heart Rate Emission");
                     if(_UseHeartRateEmissionTexture.floatValue == 1)
