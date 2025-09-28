@@ -288,13 +288,10 @@ void lilGetDecalTexture(inout lilFragData fd LIL_SAMP_IN_FUNC(samp))
         
         if (emissionStrength > 0.0)
         {
-            // sample emission mask and apply emission color
             float4 maskSample = LIL_SAMPLE_2D(_DecalTextureEmissionMask, sampler_DecalTextureEmissionMask, uv2);
-            float maskValue = maskSample.r; // use red channel as mask
+            float maskValue = maskSample.r; 
             float3 emissionCol = _DecalTextureEmissionColor.rgb;
-            // apply Main Color Power: replace emission color with decal tint color
             emissionCol = lerp(emissionCol, _DecalTextureColor.rgb, _DecalTextureMainColorPower);
-            // multiply by decal alpha mask as well to keep original decal shape
             float finalMask = decalMask * maskValue;
             fd.emissionColor += emissionCol * (emissionStrength * kEmissionScale) * finalMask;
         }
@@ -334,12 +331,9 @@ void lilGetDecalNumber(inout lilFragData fd LIL_SAMP_IN_FUNC(samp))
         
         if (emissionStrength > 0.0)
         {
-            // sample emission mask for numbers (using same UV as number sampling)
-            // number mask texture uses _DecalNumberEmissionMask; sample with numUv
             float4 maskSample = LIL_SAMPLE_2D(_DecalNumberEmissionMask, sampler_DecalNumberEmissionMask, numUv);
             float maskValue = maskSample.r;
             float3 emissionCol = _DecalNumberEmissionColor.rgb;
-            // apply Main Color Power: replace emission color with number texture tint color
             emissionCol = lerp(emissionCol, _SpriteNumberTextureColor.rgb, _DecalNumberMainColorPower);
             float finalMask = numberMask * maskValue;
             fd.emissionColor += emissionCol * (emissionStrength * kEmissionScale) * finalMask;
