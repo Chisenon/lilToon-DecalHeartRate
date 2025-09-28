@@ -36,7 +36,9 @@
     float _DecalNumberEmissionStrength; \
     float _DecalTextureEmissionStrength; \
     float4 _DecalNumberEmissionColor; \
+    float _DecalNumberMainColorPower; \
     float4 _DecalTextureEmissionColor; \
+    float _DecalTextureMainColorPower; \
     bool _UseHeartRateEmission; \
     float _HeartRateEmissionMin; \
     float _HeartRateEmissionMax; \
