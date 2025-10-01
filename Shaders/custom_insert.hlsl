@@ -292,6 +292,7 @@ void lilGetDecalTexture(inout lilFragData fd LIL_SAMP_IN_FUNC(samp))
             float maskValue = maskSample.r; 
             float3 emissionCol = _DecalTextureEmissionColor.rgb;
             emissionCol = lerp(emissionCol, _DecalTextureColor.rgb, _DecalTextureMainColorPower);
+            emissionCol *= maskSample.rgb;
             float finalMask = decalMask * maskValue;
             fd.emissionColor += emissionCol * (emissionStrength * kEmissionScale) * finalMask;
         }
@@ -335,6 +336,7 @@ void lilGetDecalNumber(inout lilFragData fd LIL_SAMP_IN_FUNC(samp))
             float maskValue = maskSample.r;
             float3 emissionCol = _DecalNumberEmissionColor.rgb;
             emissionCol = lerp(emissionCol, _SpriteNumberTextureColor.rgb, _DecalNumberMainColorPower);
+            emissionCol *= maskSample.rgb;
             float finalMask = numberMask * maskValue;
             fd.emissionColor += emissionCol * (emissionStrength * kEmissionScale) * finalMask;
         }
