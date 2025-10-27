@@ -1,6 +1,6 @@
 # lilToon-DecalHeartRate
 
-lilToonベースの心拍数に特化したDecalShader
+lilToonベースの心拍数表示に特化したDecalShader
 
 ## インストール方法
 
@@ -31,7 +31,10 @@ lilToonベースの心拍数に特化したDecalShader
 3. 必要に応じてデカールテクスチャを設定
 4. インスペクターで各種パラメータを調整
 
-**VRChatでの動的制御**: リアルタイムで心拍数を変更するには、OSCでShaderを適応したMaterialのParameterを動かす必要があります。
+> 詳しくは下記のURLを参照してください
+> [https://chisenon.github.io/ChiseDocument/ja_JP/lildhr/dhr_index.html](https://chisenon.github.io/ChiseDocument/ja_JP/lildhr/dhr_index.html)
+
+**VRChatでの動的制御**： リアルタイムで心拍数を変更するには、OSCでShaderを適応したMaterialのParameterを動かす必要があります。
 
 ## ライセンス
 
