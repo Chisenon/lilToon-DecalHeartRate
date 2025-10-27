@@ -8,6 +8,7 @@ namespace lilToon
         MaterialProperty _FloatHeartRateC;
         MaterialProperty _ActiveDecalNumber;
         MaterialProperty _ActiveDecalTexture;
+        MaterialProperty _HideDecalNumberWhenZero;
         MaterialProperty _SpriteNumberTexture;
         MaterialProperty _SpriteNumberTextureColor;
         MaterialProperty _NumberTextureBlendMode;
@@ -63,6 +64,7 @@ namespace lilToon
             _FloatHeartRateC = FindProperty("_FloatHeartRateC", props);
             _ActiveDecalNumber = FindProperty("_ActiveDecalNumber", props);
             _ActiveDecalTexture = FindProperty("_ActiveDecalTexture", props);
+            _HideDecalNumberWhenZero = FindProperty("_HideDecalNumberWhenZero", props);
             _SpriteNumberTexture = FindProperty("_SpriteNumberTexture", props);
             _SpriteNumberTextureColor = FindProperty("_SpriteNumberTextureColor", props);
             _NumberTextureBlendMode = FindProperty("_NumberTextureBlendMode", props);
@@ -248,6 +250,13 @@ namespace lilToon
 
                     DrawLine();
 
+                    EditorGUILayout.LabelField("Visibility", EditorStyles.boldLabel);
+                    EditorGUI.indentLevel++;
+                    m_MaterialEditor.ShaderProperty(_HideDecalNumberWhenZero, "Visibility Mode");
+                    EditorGUI.indentLevel--;
+
+                    DrawLine();
+
                     // Transform Settings
                     EditorGUILayout.LabelField("Transform", EditorStyles.boldLabel);
                     EditorGUI.indentLevel++;
@@ -311,7 +320,6 @@ namespace lilToon
                     EditorGUILayout.Space(3);
                     m_MaterialEditor.ShaderProperty(_DecalNumberEmissionStrength, "Basic Emission Power");
                     EditorGUILayout.Space(3);
-                    // Main Color Power: blend emission color from black to the chosen color (0..1)
                     m_MaterialEditor.ShaderProperty(_DecalNumberMainColorPower, "Main Color Power");
                     EditorGUILayout.Space(3);
                     m_MaterialEditor.ShaderProperty(_UseHeartRateEmission, "Heart Rate Emission");
@@ -401,7 +409,6 @@ namespace lilToon
                     EditorGUILayout.Space(3);
                     m_MaterialEditor.ShaderProperty(_DecalTextureEmissionStrength, "Basic Emission Power");
                     EditorGUILayout.Space(3);
-                    // Main Color Power: blend emission color from black to the chosen color (0..1)
                     m_MaterialEditor.ShaderProperty(_DecalTextureMainColorPower, "Main Color Power");
                     EditorGUILayout.Space(3);
                     m_MaterialEditor.ShaderProperty(_UseHeartRateEmissionTexture, "Heart Rate Emission");

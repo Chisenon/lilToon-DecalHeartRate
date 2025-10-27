@@ -5,6 +5,8 @@ _FloatHeartRateC                         ("HeartRate", float) = 0
 // Toggle Controls
 [lilToggleLeft] _ActiveDecalNumber      ("Number Active Toggle", Int) = 0
 [lilToggleLeft] _ActiveDecalTexture     ("Texture Active Toggle", Int) = 0
+[Enum(Always Show,0,Hide Below Zero,1)]
+                _HideDecalNumberWhenZero ("Number Visibility Mode", Int) = 0
 
 // Number Texture Properties
 [HDR][lilHDR]   _SpriteNumberTextureColor   ("Color", Color) = (1,1,1,1)

@@ -14,6 +14,7 @@
 #define LIL_CUSTOM_PROPERTIES \
     bool _ActiveDecalNumber; \
     bool _ActiveDecalTexture; \
+    int _HideDecalNumberWhenZero; \
     float4 _SpriteNumberTextureColor; \
     float4 _DecalTextureColor; \
     uint _DecalTextureBlendMode; \
