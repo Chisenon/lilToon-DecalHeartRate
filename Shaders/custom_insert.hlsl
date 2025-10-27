@@ -305,6 +305,8 @@ void lilGetDecalNumber(inout lilFragData fd LIL_SAMP_IN_FUNC(samp))
     
     float roundedHeartRate = roundHalfUp(_FloatHeartRateC);
     
+    if (_HideDecalNumberWhenZero == 1 && roundedHeartRate <= 0.0) return;
+    
     float2 offset = float2(_TexPositionXVector.x, _TexPositionYVector.x);    float2 scale = max(float2(_TexScaleXVector.x, _TexScaleYVector.x), float2(0.001, 0.001));
     float2 numUv = invAffineTransform(fd.uvMain, offset, -_NumTexRotation, scale);
     
