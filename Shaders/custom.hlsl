@@ -40,6 +40,8 @@
     float _DecalNumberMainColorPower; \
     float4 _DecalTextureEmissionColor; \
     float _DecalTextureMainColorPower; \
+    uint _DecalNumberEmissionPattern; \
+    uint _DecalTextureEmissionPattern; \
     bool _UseHeartRateEmission; \
     float _HeartRateEmissionMin; \
     float _HeartRateEmissionMax; \
