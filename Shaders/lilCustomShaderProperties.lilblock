@@ -28,6 +28,8 @@ _FloatHeartRateC                         ("HeartRate", float) = 0
                 _DecalNumberEmissionMask     ("Emission Mask", 2D) = "white" {}
 [HDR][lilHDR]   _DecalNumberEmissionColor    ("Emission Color", Color) = (1,1,1,1)
                 _DecalNumberMainColorPower   ("Main Color Power", Range(0, 1)) = 1
+[Enum(Default,0,Smooth,1)]
+                _DecalNumberEmissionPattern  ("Emission Pattern", Int) = 0
 
 // Heart Rate Emission Control
 [lilToggle]     _UseHeartRateEmission       ("Use HeartRate Emission", Int) = 0
@@ -49,6 +51,8 @@ _FloatHeartRateC                         ("HeartRate", float) = 0
                 _DecalTextureEmissionMask     ("Emission Mask", 2D) = "white" {}
 [HDR][lilHDR]   _DecalTextureEmissionColor    ("Emission Color", Color) = (1,1,1,1)
                 _DecalTextureMainColorPower   ("Main Color Power", Range(0, 1)) = 0
+[Enum(Default,0,Smooth,1)]
+                _DecalTextureEmissionPattern ("Emission Pattern", Int) = 0
 
 // Heart Rate Emission Control (also applies to texture)
 [lilToggle]     _UseHeartRateEmissionTexture ("Use HeartRate Emission", Int) = 0
