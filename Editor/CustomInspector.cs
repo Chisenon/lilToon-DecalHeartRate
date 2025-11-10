@@ -46,11 +46,13 @@ namespace lilToon
         MaterialProperty _DecalNumberEmissionMask;
         MaterialProperty _DecalNumberEmissionColor;
         MaterialProperty _DecalNumberMainColorPower;
+        MaterialProperty _DecalNumberEmissionPattern;
         
         // Texture Decal Emission Mask and Color
         MaterialProperty _DecalTextureEmissionMask;
         MaterialProperty _DecalTextureEmissionColor;
         MaterialProperty _DecalTextureMainColorPower;
+        MaterialProperty _DecalTextureEmissionPattern;
 
         private static bool isShowCustomProperties;
         private const string shaderName = "ChiseNote/DecalHeartRate";
@@ -102,9 +104,11 @@ namespace lilToon
             _DecalNumberEmissionMask = FindProperty("_DecalNumberEmissionMask", props);
             _DecalNumberEmissionColor = FindProperty("_DecalNumberEmissionColor", props);
             _DecalNumberMainColorPower = FindProperty("_DecalNumberMainColorPower", props);
+            _DecalNumberEmissionPattern = FindProperty("_DecalNumberEmissionPattern", props);
             _DecalTextureEmissionMask = FindProperty("_DecalTextureEmissionMask", props);
             _DecalTextureEmissionColor = FindProperty("_DecalTextureEmissionColor", props);
             _DecalTextureMainColorPower = FindProperty("_DecalTextureMainColorPower", props);
+            _DecalTextureEmissionPattern = FindProperty("_DecalTextureEmissionPattern", props);
         }
         protected override void DrawCustomProperties(Material material)
         {
@@ -322,6 +326,8 @@ namespace lilToon
                     EditorGUILayout.Space(3);
                     m_MaterialEditor.ShaderProperty(_DecalNumberMainColorPower, "Main Color Power");
                     EditorGUILayout.Space(3);
+                    m_MaterialEditor.ShaderProperty(_DecalNumberEmissionPattern, "Emission Pattern");
+                    EditorGUILayout.Space(3);
                     m_MaterialEditor.ShaderProperty(_UseHeartRateEmission, "Heart Rate Emission");
                     if(_UseHeartRateEmission.floatValue == 1)
                     {
@@ -410,6 +416,8 @@ namespace lilToon
                     m_MaterialEditor.ShaderProperty(_DecalTextureEmissionStrength, "Basic Emission Power");
                     EditorGUILayout.Space(3);
                     m_MaterialEditor.ShaderProperty(_DecalTextureMainColorPower, "Main Color Power");
+                    EditorGUILayout.Space(3);
+                    m_MaterialEditor.ShaderProperty(_DecalTextureEmissionPattern, "Emission Pattern");
                     EditorGUILayout.Space(3);
                     m_MaterialEditor.ShaderProperty(_UseHeartRateEmissionTexture, "Heart Rate Emission");
                     if(_UseHeartRateEmissionTexture.floatValue == 1)
