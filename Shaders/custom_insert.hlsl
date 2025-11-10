@@ -225,6 +225,30 @@ float calculateHeartRateEmission(float heartRate, float minIntensity, float maxI
     return lerp(minIntensity, maxIntensity, saturate(pulse)) * kEmissionScale;
 }
 
+float calculateHeartRateEmissionSmooth(float heartRate, float minIntensity, float maxIntensity)
+{
+    if (heartRate <= 0.0) 
+        return minIntensity * kEmissionScale;
+    
+    float phase = frac(_Time.y * heartRate / 60.0);
+    float Smooth = sin(phase * kTau);
+    float normalized = (Smooth + 1.0) * 0.5;
+    
+    return lerp(minIntensity, maxIntensity, normalized) * kEmissionScale;
+}
+
+float calculateHeartRateEmissionByPattern(float heartRate, float minIntensity, float maxIntensity, uint pattern)
+{
+    if (pattern == 1)
+    {
+        return calculateHeartRateEmissionSmooth(heartRate, minIntensity, maxIntensity);
+    }
+    else
+    {
+        return calculateHeartRateEmission(heartRate, minIntensity, maxIntensity);
+    }
+}
+
 float calculateHeartRateScale(float heartRate)
 {
     if (heartRate <= 0.0) 
@@ -279,7 +303,7 @@ void lilGetDecalTexture(inout lilFragData fd LIL_SAMP_IN_FUNC(samp))
         float emissionStrength;
         if (_UseHeartRateEmissionTexture)
         {
-            emissionStrength = calculateHeartRateEmission(roundedHeartRate, _HeartRateEmissionMinTexture, _HeartRateEmissionMaxTexture) * 100.0;
+            emissionStrength = calculateHeartRateEmissionByPattern(roundedHeartRate, _HeartRateEmissionMinTexture, _HeartRateEmissionMaxTexture, _DecalTextureEmissionPattern) * 100.0;
         }
         else
         {
@@ -325,7 +349,7 @@ void lilGetDecalNumber(inout lilFragData fd LIL_SAMP_IN_FUNC(samp))
         float emissionStrength;
         if (_UseHeartRateEmission)
         {
-            emissionStrength = calculateHeartRateEmission(roundedHeartRate, _HeartRateEmissionMin, _HeartRateEmissionMax) * 100.0;
+            emissionStrength = calculateHeartRateEmissionByPattern(roundedHeartRate, _HeartRateEmissionMin, _HeartRateEmissionMax, _DecalNumberEmissionPattern) * 100.0;
         }
         else
         {
