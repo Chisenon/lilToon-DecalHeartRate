@@ -42,8 +42,13 @@ namespace lilToon
         MaterialProperty _UseHeartRateScaleTexture;
         MaterialProperty _HeartRateScaleIntensity;
         MaterialProperty _DecalNumberVisibilityThreshold;
+        MaterialProperty _DecalNumberThresholdAffectsDisplay;
+        MaterialProperty _DecalNumberThresholdAffectsEmission;
         MaterialProperty _HideDecalTextureWhenZero;
         MaterialProperty _DecalTextureVisibilityThreshold;
+        MaterialProperty _DecalTextureThresholdAffectsDisplay;
+        MaterialProperty _DecalTextureThresholdAffectsEmission;
+        MaterialProperty _DecalTextureThresholdAffectsScale;
         
         // Number Decal Emission Mask and Color
         MaterialProperty _DecalNumberEmissionMask;
@@ -103,8 +108,13 @@ namespace lilToon
             _UseHeartRateScaleTexture = FindProperty("_UseHeartRateScaleTexture", props);
             _HeartRateScaleIntensity = FindProperty("_HeartRateScaleIntensity", props);
             _DecalNumberVisibilityThreshold = FindProperty("_DecalNumberVisibilityThreshold", props);
+            _DecalNumberThresholdAffectsDisplay = FindProperty("_DecalNumberThresholdAffectsDisplay", props);
+            _DecalNumberThresholdAffectsEmission = FindProperty("_DecalNumberThresholdAffectsEmission", props);
             _HideDecalTextureWhenZero = FindProperty("_HideDecalTextureWhenZero", props);
             _DecalTextureVisibilityThreshold = FindProperty("_DecalTextureVisibilityThreshold", props);
+            _DecalTextureThresholdAffectsDisplay = FindProperty("_DecalTextureThresholdAffectsDisplay", props);
+            _DecalTextureThresholdAffectsEmission = FindProperty("_DecalTextureThresholdAffectsEmission", props);
+            _DecalTextureThresholdAffectsScale = FindProperty("_DecalTextureThresholdAffectsScale", props);
             
             // Load new emission properties
             _DecalNumberEmissionMask = FindProperty("_DecalNumberEmissionMask", props);
@@ -266,6 +276,9 @@ namespace lilToon
                     if(_HideDecalNumberWhenZero.floatValue == 1)
                     {
                         m_MaterialEditor.ShaderProperty(_DecalNumberVisibilityThreshold, "Threshold Value");
+                        EditorGUILayout.Space(3);
+                        m_MaterialEditor.ShaderProperty(_DecalNumberThresholdAffectsDisplay, "Apply Threshold To Display");
+                        m_MaterialEditor.ShaderProperty(_DecalNumberThresholdAffectsEmission, "Apply Threshold To Emission");
                     }
                     EditorGUI.indentLevel--;
 
@@ -381,6 +394,10 @@ namespace lilToon
                     if(_HideDecalTextureWhenZero.floatValue == 1)
                     {
                         m_MaterialEditor.ShaderProperty(_DecalTextureVisibilityThreshold, "Threshold Value");
+                        EditorGUILayout.Space(3);
+                        m_MaterialEditor.ShaderProperty(_DecalTextureThresholdAffectsDisplay, "Apply Threshold To Display");
+                        m_MaterialEditor.ShaderProperty(_DecalTextureThresholdAffectsEmission, "Apply Threshold To Emission");
+                        m_MaterialEditor.ShaderProperty(_DecalTextureThresholdAffectsScale, "Apply Threshold To Scale");
                     }
                     EditorGUI.indentLevel--;
 

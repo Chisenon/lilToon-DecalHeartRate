@@ -52,6 +52,11 @@ float _HeartRateEmissionMaxTexture; \
 bool _UseHeartRateScaleTexture; \
 float _DecalNumberVisibilityThreshold; \
 float _DecalTextureVisibilityThreshold; \
+int _DecalNumberThresholdAffectsDisplay; \
+int _DecalNumberThresholdAffectsEmission; \
+int _DecalTextureThresholdAffectsDisplay; \
+int _DecalTextureThresholdAffectsEmission; \
+int _DecalTextureThresholdAffectsScale; \
 float _HeartRateScaleIntensity;
 
 // Custom textures
