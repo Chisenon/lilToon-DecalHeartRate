@@ -41,6 +41,7 @@ namespace lilToon
         MaterialProperty _HeartRateEmissionMaxTexture;
         MaterialProperty _UseHeartRateScaleTexture;
         MaterialProperty _HeartRateScaleIntensity;
+        MaterialProperty _DecalNumberVisibilityThreshold;
         
         // Number Decal Emission Mask and Color
         MaterialProperty _DecalNumberEmissionMask;
@@ -99,6 +100,7 @@ namespace lilToon
             _HeartRateEmissionMaxTexture = FindProperty("_HeartRateEmissionMaxTexture", props);
             _UseHeartRateScaleTexture = FindProperty("_UseHeartRateScaleTexture", props);
             _HeartRateScaleIntensity = FindProperty("_HeartRateScaleIntensity", props);
+            _DecalNumberVisibilityThreshold = FindProperty("_DecalNumberVisibilityThreshold", props);
             
             // Load new emission properties
             _DecalNumberEmissionMask = FindProperty("_DecalNumberEmissionMask", props);
@@ -257,6 +259,10 @@ namespace lilToon
                     EditorGUILayout.LabelField("Visibility", EditorStyles.boldLabel);
                     EditorGUI.indentLevel++;
                     m_MaterialEditor.ShaderProperty(_HideDecalNumberWhenZero, "Visibility Mode");
+                    if(_HideDecalNumberWhenZero.floatValue == 1)
+                    {
+                        m_MaterialEditor.ShaderProperty(_DecalNumberVisibilityThreshold, "Threshold Value");
+                    }
                     EditorGUI.indentLevel--;
 
                     DrawLine();
