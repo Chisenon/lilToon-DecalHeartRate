@@ -15,6 +15,7 @@
 bool _ActiveDecalNumber; \
 bool _ActiveDecalTexture; \
 int _HideDecalNumberWhenZero; \
+int _HideDecalTextureWhenZero; \
 float4 _SpriteNumberTextureColor; \
 float4 _DecalTextureColor; \
 uint _DecalTextureBlendMode; \
@@ -50,6 +51,7 @@ float _HeartRateEmissionMinTexture; \
 float _HeartRateEmissionMaxTexture; \
 bool _UseHeartRateScaleTexture; \
 float _DecalNumberVisibilityThreshold; \
+float _DecalTextureVisibilityThreshold; \
 float _HeartRateScaleIntensity;
 
 // Custom textures

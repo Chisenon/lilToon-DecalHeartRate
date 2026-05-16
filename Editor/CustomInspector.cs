@@ -42,6 +42,8 @@ namespace lilToon
         MaterialProperty _UseHeartRateScaleTexture;
         MaterialProperty _HeartRateScaleIntensity;
         MaterialProperty _DecalNumberVisibilityThreshold;
+        MaterialProperty _HideDecalTextureWhenZero;
+        MaterialProperty _DecalTextureVisibilityThreshold;
         
         // Number Decal Emission Mask and Color
         MaterialProperty _DecalNumberEmissionMask;
@@ -101,6 +103,8 @@ namespace lilToon
             _UseHeartRateScaleTexture = FindProperty("_UseHeartRateScaleTexture", props);
             _HeartRateScaleIntensity = FindProperty("_HeartRateScaleIntensity", props);
             _DecalNumberVisibilityThreshold = FindProperty("_DecalNumberVisibilityThreshold", props);
+            _HideDecalTextureWhenZero = FindProperty("_HideDecalTextureWhenZero", props);
+            _DecalTextureVisibilityThreshold = FindProperty("_DecalTextureVisibilityThreshold", props);
             
             // Load new emission properties
             _DecalNumberEmissionMask = FindProperty("_DecalNumberEmissionMask", props);
@@ -370,6 +374,18 @@ namespace lilToon
 
                     DrawLine();
 
+                    // Visibility Settings
+                    EditorGUILayout.LabelField("Visibility", EditorStyles.boldLabel);
+                    EditorGUI.indentLevel++;
+                    m_MaterialEditor.ShaderProperty(_HideDecalTextureWhenZero, "Visibility Mode");
+                    if(_HideDecalTextureWhenZero.floatValue == 1)
+                    {
+                        m_MaterialEditor.ShaderProperty(_DecalTextureVisibilityThreshold, "Threshold Value");
+                    }
+                    EditorGUI.indentLevel--;
+
+                    DrawLine();
+
                     // Transform Settings
                     EditorGUILayout.LabelField("Transform", EditorStyles.boldLabel);
                     EditorGUI.indentLevel++;
@@ -410,7 +426,7 @@ namespace lilToon
 
                     // Rotation
                     m_MaterialEditor.ShaderProperty(_DecalRotation, "Rotation Angle");
-                    EditorGUI.indentLevel--;                    DrawLine();
+                    EditorGUI.indentLevel--;
 
                     // Emission Settings
                     EditorGUILayout.LabelField("Emission", EditorStyles.boldLabel);

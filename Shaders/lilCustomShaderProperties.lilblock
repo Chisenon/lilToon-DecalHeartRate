@@ -42,6 +42,9 @@ _FloatHeartRateC                         ("HeartRate", float) = 0
                 _DecalTexture                ("Texture", 2D) = "white" {}
 [Enum(Normal,0,Multiply,3)]
                 _DecalTextureBlendMode       ("Blend Mode", Int) = 0
+[Enum(Always Show,0,Hide Below Threshold,1)]
+                _HideDecalTextureWhenZero    ("Texture Visibility Mode", Int) = 0
+                _DecalTextureVisibilityThreshold ("Visibility Threshold", Range(0, 300)) = 0
 [lilVec4]       _DecalPositionXVector        ("Decal Position X", Vector) = (0.0, 0.0, 0.0, 0.0)
 [lilVec4]       _DecalPositionYVector        ("Decal Position Y", Vector) = (0.0, 0.0, 0.0, 0.0)
 [lilVec4]       _DecalScaleXVector           ("Decal Scale X", Vector) = (0.5, 0.5, 0.5, 0.5)

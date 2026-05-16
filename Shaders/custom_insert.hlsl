@@ -248,6 +248,8 @@ void lilGetDecalTexture(inout lilFragData fd LIL_SAMP_IN_FUNC(samp)) {
 
     float roundedHeartRate = roundHalfUp(_FloatHeartRateC);
 
+    if (_HideDecalTextureWhenZero == 1 && roundedHeartRate < _DecalTextureVisibilityThreshold) return;
+
     float2 offset = float2(_DecalPositionXVector.x, _DecalPositionYVector.x);    float2 scale = max(float2(_DecalScaleXVector.x, _DecalScaleYVector.x), float2(0.001, 0.001));
 
     if (_UseHeartRateScaleTexture && roundedHeartRate > 0)
