@@ -74,60 +74,51 @@ float2 calculateSpriteUV(float localUvX, float spriteColumnIndex, float characte
     return float2(lerp(sampleStartU, sampleEndU, localUvX), sampleStartU);
 }
 
+int calculateDigitSlot(float uvX, float startOffset, float newDigitSpacing, float digitWidth, float displayLength)
+{
+    if (newDigitSpacing <= 0.0)
+        return -1;
+
+    float slotFloat = floor((uvX - startOffset) / newDigitSpacing);
+    int slot = (int)slotFloat;
+
+    if (slot < 0 || slot > 5 || float(slot) >= displayLength)
+        return -1;
+
+    float digitStart = startOffset + float(slot) * newDigitSpacing;
+    float digitEnd = digitStart + digitWidth;
+
+    if (uvX < digitStart || uvX >= digitEnd)
+        return -1;
+
+    return slot;
+}
+
 // ZERO FILL mode (alignMode = 0.0)
 float3 sampleSpriteCore_align0(float val, float2 uv, float displayLength, float characterOffset, float digitSpacing)
 {
     float digitWidth = 1.0 / displayLength;
-    float invDigitWidth = 1.0 / digitWidth;
-    float gapReduction = 1.0 - digitSpacing;
     float newDigitSpacing = digitWidth * digitSpacing;
-    float totalWidth = displayLength * digitWidth - (displayLength - 1.0) * digitWidth * gapReduction;
     float startOffset = 0.0;  // Left-aligned fill
-    
-    float3 finalColor = kZeroColor;
-    float totalAlpha = 0.0;
-    
+
+    int slot = calculateDigitSlot(uv.x, startOffset, newDigitSpacing, digitWidth, displayLength);
+    if (slot < 0)
+        return kZeroColor;
+
+    float localUvX = (uv.x - (startOffset + float(slot) * newDigitSpacing)) / digitWidth;
     float powerBase = pow(10.0, displayLength - 1.0);
     static const float powerFactors[6] = {1.0, 0.1, 0.01, 0.001, 0.0001, 0.00001};
-    
-    [unroll(6)]
-    for (int i = 5; i >= 0; i--)
-    {
-        if (float(i) >= displayLength)
-            continue;
-        
-        float digitIndex = float(i);
-        float newDigitStart = startOffset + digitIndex * newDigitSpacing;
-        float newDigitEnd = newDigitStart + digitWidth;
-        
-        if (uv.x < newDigitStart || uv.x >= newDigitEnd)
-            continue;
-        
-        float localUvX = (uv.x - newDigitStart) * invDigitWidth;
-        float power = powerBase * powerFactors[i];
-        float digitToRender = calcDigit(val, power);
-        
-        float2 spriteUvData = calculateSpriteUV(localUvX, digitToRender, characterOffset);
-        
-        if (spriteUvData.x < 0.0 || digitToRender >= kColumns)
-            continue;
-        
-        float2 spriteUv = float2(spriteUvData.x, uv.y);
-        float4 texSample = LIL_SAMPLE_2D(_SpriteNumberTexture, sampler_SpriteNumberTexture, spriteUv);
-        
-        if (texSample.a >= kAlphaThreshold)
-        {
-            float alpha = texSample.a;
-            float3 digitColor = float3(1.0, 1.0, 1.0);
-            finalColor = lerp(finalColor, digitColor, alpha * (1.0 - totalAlpha));
-            totalAlpha = saturate(totalAlpha + alpha);
-            
-            if (totalAlpha >= 0.99)
-                break;
-        }
-    }
-    
-    return finalColor;
+
+    float power = powerBase * powerFactors[slot];
+    float digitToRender = calcDigit(val, power);
+    float2 spriteUvData = calculateSpriteUV(localUvX, digitToRender, characterOffset);
+
+    if (spriteUvData.x < 0.0 || digitToRender >= kColumns)
+        return kZeroColor;
+
+    float2 spriteUv = float2(spriteUvData.x, uv.y);
+    float4 texSample = LIL_SAMPLE_2D(_SpriteNumberTexture, sampler_SpriteNumberTexture, spriteUv);
+    return (texSample.a >= kAlphaThreshold) ? float3(1.0, 1.0, 1.0) : kZeroColor;
 }
 
 // SHIFT RIGHT mode (alignMode = 1.0) - Right-aligned
@@ -139,123 +130,58 @@ float3 sampleSpriteCore_align1(float val, float2 uv, float displayLength, float 
         numActualDigits = displayLength;
     }
 
-    float emptySlotsOnLeft = max(0.0, displayLength - numActualDigits);
     float digitWidth = 1.0 / displayLength;
-    float invDigitWidth = 1.0 / digitWidth;
     float gapReduction = 1.0 - digitSpacing;
     float newDigitSpacing = digitWidth * digitSpacing;
     float totalWidth = numActualDigits * digitWidth - (numActualDigits - 1.0) * digitWidth * gapReduction;
     float startOffset = 1.0 - totalWidth;  // Right-aligned (move to right edge)
-    
-    float3 finalColor = kZeroColor;
-    float totalAlpha = 0.0;
-    
+
+    int slot = calculateDigitSlot(uv.x, startOffset, newDigitSpacing, digitWidth, numActualDigits);
+    if (slot < 0)
+        return kZeroColor;
+
+    float localUvX = (uv.x - (startOffset + float(slot) * newDigitSpacing)) / digitWidth;
     float powerBase = pow(10.0, numActualDigits - 1.0);
     static const float powerFactors[6] = {1.0, 0.1, 0.01, 0.001, 0.0001, 0.00001};
-    
-    int loopEnd = int(min(5.0, displayLength - 1.0));
-    [unroll(6)]
-    for (int i = loopEnd; i >= 0; i--)
-    {
-        if (float(i) >= displayLength)
-            continue;
-        
-        if (float(i) < emptySlotsOnLeft)
-            continue;
-        
-        float digitIndex = float(i) - emptySlotsOnLeft;
-        float newDigitStart = startOffset + digitIndex * newDigitSpacing;
-        float newDigitEnd = newDigitStart + digitWidth;
-        
-        if (uv.x < newDigitStart || uv.x >= newDigitEnd)
-            continue;
-        
-        float localUvX = (uv.x - newDigitStart) * invDigitWidth;
-        float effectiveDigitIndex = float(i) - emptySlotsOnLeft;
-        float power = powerBase * powerFactors[int(effectiveDigitIndex)];
-        float digitToRender = calcDigit(val, power);
-        
-        float2 spriteUvData = calculateSpriteUV(localUvX, digitToRender, characterOffset);
-        
-        if (spriteUvData.x < 0.0 || digitToRender >= kColumns)
-            continue;
-        
-        float2 spriteUv = float2(spriteUvData.x, uv.y);
-        float4 texSample = LIL_SAMPLE_2D(_SpriteNumberTexture, sampler_SpriteNumberTexture, spriteUv);
-        
-        if (texSample.a >= kAlphaThreshold)
-        {
-            float alpha = texSample.a;
-            float3 digitColor = float3(1.0, 1.0, 1.0);
-            finalColor = lerp(finalColor, digitColor, alpha * (1.0 - totalAlpha));
-            totalAlpha = saturate(totalAlpha + alpha);
-            
-            if (totalAlpha >= 0.99)
-                break;
-        }
-    }
-    
-    return finalColor;
+    if (slot > 5)
+        return kZeroColor;
+
+    float power = powerBase * powerFactors[slot];
+    float digitToRender = calcDigit(val, power);
+    float2 spriteUvData = calculateSpriteUV(localUvX, digitToRender, characterOffset);
+
+    if (spriteUvData.x < 0.0 || digitToRender >= kColumns)
+        return kZeroColor;
+
+    float2 spriteUv = float2(spriteUvData.x, uv.y);
+    float4 texSample = LIL_SAMPLE_2D(_SpriteNumberTexture, sampler_SpriteNumberTexture, spriteUv);
+    return (texSample.a >= kAlphaThreshold) ? float3(1.0, 1.0, 1.0) : kZeroColor;
 }
 
 // SHIFT LEFT mode (alignMode = 2.0) - Left-aligned
 float3 sampleSpriteCore_align2(float val, float2 uv, float displayLength, float characterOffset, float digitSpacing, float numActualDigits)
 {
     float digitWidth = 1.0 / displayLength;
-    float invDigitWidth = 1.0 / digitWidth;
-    float gapReduction = 1.0 - digitSpacing;
     float newDigitSpacing = digitWidth * digitSpacing;
-    float totalWidth = numActualDigits * digitWidth - (numActualDigits - 1.0) * digitWidth * gapReduction;
     float startOffset = 0.0;  // Left-aligned
-    
-    float3 finalColor = kZeroColor;
-    float totalAlpha = 0.0;
-    
+
+    int slot = calculateDigitSlot(uv.x, startOffset, newDigitSpacing, digitWidth, displayLength);
+    if (slot < 0 || float(slot) >= numActualDigits)
+        return kZeroColor;
+
+    float localUvX = (uv.x - (startOffset + float(slot) * newDigitSpacing)) / digitWidth;
     float powerBase = pow(10.0, numActualDigits - 1.0);
     static const float powerFactors[6] = {1.0, 0.1, 0.01, 0.001, 0.0001, 0.00001};
-    
-    int loopEnd = int(min(5.0, displayLength - 1.0));
-    [unroll(6)]
-    for (int i = loopEnd; i >= 0; i--)
-    {
-        if (float(i) >= displayLength)
-            continue;
-        
-        if (float(i) >= numActualDigits)
-            continue;
-        
-        float digitIndex = float(i);
-        float newDigitStart = startOffset + digitIndex * newDigitSpacing;
-        float newDigitEnd = newDigitStart + digitWidth;
-        
-        if (uv.x < newDigitStart || uv.x >= newDigitEnd)
-            continue;
-        
-        float localUvX = (uv.x - newDigitStart) * invDigitWidth;
-        float power = powerBase * powerFactors[i];
-        float digitToRender = calcDigit(val, power);
-        
-        float2 spriteUvData = calculateSpriteUV(localUvX, digitToRender, characterOffset);
-        
-        if (spriteUvData.x < 0.0 || digitToRender >= kColumns)
-            continue;
-        
-        float2 spriteUv = float2(spriteUvData.x, uv.y);
-        float4 texSample = LIL_SAMPLE_2D(_SpriteNumberTexture, sampler_SpriteNumberTexture, spriteUv);
-        
-        if (texSample.a >= kAlphaThreshold)
-        {
-            float alpha = texSample.a;
-            float3 digitColor = float3(1.0, 1.0, 1.0);
-            finalColor = lerp(finalColor, digitColor, alpha * (1.0 - totalAlpha));
-            totalAlpha = saturate(totalAlpha + alpha);
-            
-            if (totalAlpha >= 0.99)
-                break;
-        }
-    }
-    
-    return finalColor;
+    float power = powerBase * powerFactors[slot];
+    float digitToRender = calcDigit(val, power);
+    float2 spriteUvData = calculateSpriteUV(localUvX, digitToRender, characterOffset);
+
+    if (spriteUvData.x < 0.0 || digitToRender >= kColumns)
+        return kZeroColor;
+
+    float2 spriteUv = float2(spriteUvData.x, uv.y);
+    float4 texSample = LIL_SAMPLE_2D(_SpriteNumberTexture, sampler_SpriteNumberTexture, spriteUv);
+    return (texSample.a >= kAlphaThreshold) ? float3(1.0, 1.0, 1.0) : kZeroColor;
 }
 
 float3 sampleSpriteWithSpacing(float val, float2 uv, float displayLength, float alignMode, float characterOffset, float digitSpacing)
