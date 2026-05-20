@@ -7,6 +7,7 @@ static const float kAlphaThreshold = 0.5;
 static const float kEmissionScale = 0.01;
 static const float2 kUvCenter = float2(0.5, 0.5);
 static const float3 kZeroColor = float3(0.0, 0.0, 0.0);
+static const float kPowerFactors[6] = {1.0, 0.1, 0.01, 0.001, 0.0001, 0.00001};
 
 float roundHalfUp(float value)
 {
@@ -39,6 +40,24 @@ float calcDigit(float val, float digitNum)
     return floor(fmodglsl(abs(val), digitNum * 10.0) / digitNum);
 }
 
+float countDigits(float val)
+{
+    if (val < 10.0) return 1.0;
+    if (val < 100.0) return 2.0;
+    if (val < 1000.0) return 3.0;
+    if (val < 10000.0) return 4.0;
+    if (val < 100000.0) return 5.0;
+    if (val < 1000000.0) return 6.0;
+    return 7.0;
+}
+
+float fastExp(float x)
+{
+    float numerator = 120.0 + x * (60.0 + x * (12.0 + x));
+    float denominator = 120.0 + x * (-60.0 + x * (12.0 - x));
+    return numerator / denominator;
+}
+
 float2 calculateSpriteUV(float localUvX, float spriteColumnIndex, float characterOffset)
 {
     if (localUvX < kMarginRatio || localUvX > (1.0 - kMarginRatio))
@@ -54,123 +73,144 @@ float2 calculateSpriteUV(float localUvX, float spriteColumnIndex, float characte
     return float2(lerp(sampleStartU, sampleEndU, localUvX), sampleStartU);
 }
 
+float sampleDigitAlphaAtSlot(
+    float val,
+    float2 uv,
+    float startOffset,
+    float newDigitSpacing,
+    float digitWidth,
+    float maxDigits,
+    float powerBase,
+    float characterOffset,
+    int slot)
+{
+    if (slot < 0 || slot > 5 || float(slot) >= maxDigits)
+        return 0.0;
+
+    float digitStart = startOffset + float(slot) * newDigitSpacing;
+    float digitEnd = digitStart + digitWidth;
+    if (uv.x < digitStart || uv.x >= digitEnd)
+        return 0.0;
+
+    float localUvX = (uv.x - digitStart) / digitWidth;
+    float power = powerBase * kPowerFactors[slot];
+    float digitToRender = calcDigit(val, power);
+    float2 spriteUvData = calculateSpriteUV(localUvX, digitToRender, characterOffset);
+
+    if (spriteUvData.x < 0.0 || digitToRender >= kColumns)
+        return 0.0;
+
+    float2 spriteUv = float2(spriteUvData.x, uv.y);
+    float4 texSample = LIL_SAMPLE_2D(_SpriteNumberTexture, sampler_SpriteNumberTexture, spriteUv);
+    return (texSample.a >= kAlphaThreshold) ? texSample.a : 0.0;
+}
+
+// ZERO FILL mode (alignMode = 0.0)
+float3 sampleSpriteCore_align0(float val, float2 uv, float displayLength, float characterOffset, float digitSpacing)
+{
+    float digitWidth = 1.0 / displayLength;
+    float newDigitSpacing = digitWidth * digitSpacing;
+    float startOffset = 0.0;  // Left-aligned fill
+    float powerBase = pow(10.0, displayLength - 1.0);
+    float3 finalColor = kZeroColor;
+    float totalAlpha = 0.0;
+
+    [unroll(6)]
+    for (int slot = 0; slot < 6; slot++)
+    {
+        float alpha = sampleDigitAlphaAtSlot(val, uv, startOffset, newDigitSpacing, digitWidth, displayLength, powerBase, characterOffset, slot);
+        if (alpha > 0.0)
+        {
+            finalColor = lerp(finalColor, float3(1.0, 1.0, 1.0), alpha * (1.0 - totalAlpha));
+            totalAlpha = saturate(totalAlpha + alpha);
+            if (totalAlpha >= 0.99)
+                break;
+        }
+    }
+
+    return finalColor;
+}
+
+// SHIFT RIGHT mode (alignMode = 1.0) - Right-aligned
+float3 sampleSpriteCore_align1(float val, float2 uv, float displayLength, float characterOffset, float digitSpacing, float numActualDigits)
+{
+    if (numActualDigits > displayLength)
+    {
+        val = floor(fmodglsl(val, pow(10.0, displayLength)));
+        numActualDigits = displayLength;
+    }
+
+    float digitWidth = 1.0 / displayLength;
+    float gapReduction = 1.0 - digitSpacing;
+    float newDigitSpacing = digitWidth * digitSpacing;
+    float totalWidth = numActualDigits * digitWidth - (numActualDigits - 1.0) * digitWidth * gapReduction;
+    float startOffset = 1.0 - totalWidth;  // Right-aligned (move to right edge)
+    float powerBase = pow(10.0, numActualDigits - 1.0);
+    float3 finalColor = kZeroColor;
+    float totalAlpha = 0.0;
+
+    [unroll(6)]
+    for (int slot = 0; slot < 6; slot++)
+    {
+        float alpha = sampleDigitAlphaAtSlot(val, uv, startOffset, newDigitSpacing, digitWidth, numActualDigits, powerBase, characterOffset, slot);
+        if (alpha > 0.0)
+        {
+            finalColor = lerp(finalColor, float3(1.0, 1.0, 1.0), alpha * (1.0 - totalAlpha));
+            totalAlpha = saturate(totalAlpha + alpha);
+            if (totalAlpha >= 0.99)
+                break;
+        }
+    }
+
+    return finalColor;
+}
+
+// SHIFT LEFT mode (alignMode = 2.0) - Left-aligned
+float3 sampleSpriteCore_align2(float val, float2 uv, float displayLength, float characterOffset, float digitSpacing, float numActualDigits)
+{
+    float digitWidth = 1.0 / displayLength;
+    float newDigitSpacing = digitWidth * digitSpacing;
+    float startOffset = 0.0;  // Left-aligned
+    float powerBase = pow(10.0, numActualDigits - 1.0);
+    float3 finalColor = kZeroColor;
+    float totalAlpha = 0.0;
+
+    [unroll(6)]
+    for (int slot = 0; slot < 6; slot++)
+    {
+        float alpha = sampleDigitAlphaAtSlot(val, uv, startOffset, newDigitSpacing, digitWidth, numActualDigits, powerBase, characterOffset, slot);
+        if (alpha > 0.0)
+        {
+            finalColor = lerp(finalColor, float3(1.0, 1.0, 1.0), alpha * (1.0 - totalAlpha));
+            totalAlpha = saturate(totalAlpha + alpha);
+            if (totalAlpha >= 0.99)
+                break;
+        }
+    }
+
+    return finalColor;
+}
+
 float3 sampleSpriteWithSpacing(float val, float2 uv, float displayLength, float alignMode, float characterOffset, float digitSpacing)
 {
     if (any(uv < 0.0) || any(uv >= 1.0))
         return kZeroColor;
 
     val = abs(val);
-    float numActualDigits = max(1.0, (val < 1.0) ? 1.0 : floor(log10(val)) + 1.0);
+    float numActualDigits = max(1.0, (val < 1.0) ? 1.0 : countDigits(val));
     
-    float effectiveDigits = (alignMode == 1.0 || alignMode == 2.0) ? numActualDigits : displayLength;
-    float digitWidth = 1.0 / displayLength;
-    
-    float gapReduction = 1.0 - digitSpacing;
-    float newDigitSpacing = digitWidth * digitSpacing;
-    float totalWidth = effectiveDigits * digitWidth - (effectiveDigits - 1) * digitWidth * gapReduction;
-    float startOffset = (1.0 - totalWidth) * 0.5;
-    
-    float3 finalColor = kZeroColor;
-    float totalAlpha = 0.0;
-    
-    [unroll(6)]
-    for (int i = 0; i < 6; i++)
+    if (alignMode < 1.0)
     {
-        if (float(i) >= displayLength)
-            continue;
-            
-        float digitIndex = 0.0;
-        bool isValidDigit = false;
-        float currentDigitSlot = float(i);
-        
-        if (alignMode == 0.0)
-        {
-            digitIndex = float(i);
-            isValidDigit = true;
-        }
-        else if (alignMode == 1.0)
-        {
-            float emptySlotsOnLeft = max(0.0, displayLength - numActualDigits);
-            if (float(i) >= emptySlotsOnLeft)
-            {
-                digitIndex = float(i) - emptySlotsOnLeft;
-                isValidDigit = true;
-            }
-        }
-        else
-        {
-            if (float(i) < numActualDigits)
-            {
-                digitIndex = float(i);
-                isValidDigit = true;
-            }
-        }
-        
-        if (isValidDigit)
-        {
-            float newDigitStart = startOffset + digitIndex * newDigitSpacing;
-            float newDigitEnd = newDigitStart + digitWidth;
-            
-            if (uv.x >= newDigitStart && uv.x < newDigitEnd)
-            {
-                float localUvX = (uv.x - newDigitStart) / digitWidth;
-                
-                float digitToRender;
-                bool renderThisDigit = false;
-
-                if (alignMode == 0.0)
-                {
-                    float power = pow(10.0, displayLength - 1.0 - currentDigitSlot);
-                    digitToRender = calcDigit(val, power);
-                    renderThisDigit = true;
-                }
-                else if (alignMode == 1.0)
-                {
-                    float emptySlotsOnLeft = max(0.0, displayLength - numActualDigits);
-                    if (currentDigitSlot >= emptySlotsOnLeft)
-                    {
-                        float effectiveDigitIndex = currentDigitSlot - emptySlotsOnLeft;
-                        float power = pow(10.0, numActualDigits - 1.0 - effectiveDigitIndex);
-                        digitToRender = calcDigit(val, power);
-                        renderThisDigit = true;
-                    }
-                }
-                else
-                {
-                    if (currentDigitSlot < numActualDigits)
-                    {
-                        float power = pow(10.0, numActualDigits - 1.0 - currentDigitSlot);
-                        digitToRender = calcDigit(val, power);
-                        renderThisDigit = true;
-                    }
-                }
-
-                if (renderThisDigit)
-                {
-                    float2 spriteUvData = calculateSpriteUV(localUvX, digitToRender, characterOffset);
-                    
-                    if (spriteUvData.x >= 0.0 && digitToRender < kColumns)
-                    {
-                        float2 spriteUv = float2(spriteUvData.x, uv.y);
-                        float4 texSample = LIL_SAMPLE_2D(_SpriteNumberTexture, sampler_SpriteNumberTexture, spriteUv);
-                        
-                        if (texSample.a >= kAlphaThreshold)
-                        {
-                            float alpha = texSample.a;
-                            float3 digitColor = float3(1.0, 1.0, 1.0);
-                            finalColor = lerp(finalColor, digitColor, alpha * (1.0 - totalAlpha));
-                            totalAlpha = saturate(totalAlpha + alpha);
-                            
-                            if (totalAlpha >= 0.99)
-                                break;
-                        }
-                    }
-                }
-            }
-        }
+        return sampleSpriteCore_align0(val, uv, displayLength, characterOffset, digitSpacing);
     }
-    
-    return finalColor;
+    else if (alignMode < 2.0)
+    {
+        return sampleSpriteCore_align1(val, uv, displayLength, characterOffset, digitSpacing, numActualDigits);
+    }
+    else
+    {
+        return sampleSpriteCore_align2(val, uv, displayLength, characterOffset, digitSpacing, numActualDigits);
+    }
 }
 
 float3 sampleSprite(float val, float2 uv, float displayLength, float alignMode, float characterOffset)
@@ -214,23 +254,21 @@ float3 sampleSpriteSigned(float val, float2 uv, float displayLength, float align
     return sampleSpriteSignedWithSpacing(val, uv, displayLength, align, characterOffset, 1.0);
 }
 
-float calculateHeartRateEmission(float heartRate, float minIntensity, float maxIntensity)
+float calculateHeartRateEmission(float heartRate, float phase, float minIntensity, float maxIntensity)
 {
     if (heartRate <= 0.0) 
         return minIntensity * kEmissionScale;
     
-    float phase = frac(_Time.y * heartRate / 60.0);
-    float pulse = (phase < 0.1) ? (phase * 10.0) : exp(-(phase - 0.1) * 4.167);
+    float pulse = (phase < 0.1) ? (phase * 10.0) : fastExp(-(phase - 0.1) * 4.167);
     
     return lerp(minIntensity, maxIntensity, saturate(pulse)) * kEmissionScale;
 }
 
-float calculateHeartRateEmissionSmooth(float heartRate, float minIntensity, float maxIntensity)
+float calculateHeartRateEmissionSmooth(float heartRate, float phase, float minIntensity, float maxIntensity)
 {
     if (heartRate <= 0.0) 
         return minIntensity * kEmissionScale;
     
-    float phase = frac(_Time.y * heartRate / 60.0);
     float Smooth = sin(phase * kTau);
     float normalized = (Smooth + 1.0) * 0.5;
     
@@ -239,22 +277,25 @@ float calculateHeartRateEmissionSmooth(float heartRate, float minIntensity, floa
 
 float calculateHeartRateEmissionByPattern(float heartRate, float minIntensity, float maxIntensity, uint pattern)
 {
+    if (heartRate <= 0.0) 
+        return minIntensity * kEmissionScale;
+    
+    float phase = frac(_Time.y * heartRate / 60.0); 
+
     if (pattern == 1)
     {
-        return calculateHeartRateEmissionSmooth(heartRate, minIntensity, maxIntensity);
+        return calculateHeartRateEmissionSmooth(heartRate, phase, minIntensity, maxIntensity);
     }
     else
     {
-        return calculateHeartRateEmission(heartRate, minIntensity, maxIntensity);
+        return calculateHeartRateEmission(heartRate, phase, minIntensity, maxIntensity);
     }
 }
 
-float calculateHeartRateScale(float heartRate)
+float calculateHeartRateScale(float heartRate, float phase)
 {
     if (heartRate <= 0.0) 
         return 1.0;
-    
-    float phase = frac(_Time.y * heartRate / 60.0);
     
     static const float kDampingFactor = 5.0;
     static const float kOscillationFreq = 4.0;
@@ -264,12 +305,12 @@ float calculateHeartRateScale(float heartRate)
     if (phase < kExpandThreshold)
     {
         float expandPhase = phase / kExpandThreshold;
-        return 1.0 + _HeartRateScaleIntensity * (1.0 - exp(-expandPhase * 5.0));
+        return 1.0 + _HeartRateScaleIntensity * (1.0 - fastExp(-expandPhase * 5.0));
     }
     else
     {
         float oscillationPhase = (phase - kExpandThreshold) / (1.0 - kExpandThreshold);
-        float dampedAmplitude = exp(-kDampingFactor * oscillationPhase);
+        float dampedAmplitude = fastExp(-kDampingFactor * oscillationPhase);
         
         if (dampedAmplitude < kAmplitudeThreshold) 
             return 1.0;
@@ -288,7 +329,10 @@ void lilGetDecalTexture(inout lilFragData fd LIL_SAMP_IN_FUNC(samp))
     float2 offset = float2(_DecalPositionXVector.x, _DecalPositionYVector.x);    float2 scale = max(float2(_DecalScaleXVector.x, _DecalScaleYVector.x), float2(0.001, 0.001));
     
     if (_UseHeartRateScaleTexture && roundedHeartRate > 0)
-        scale *= calculateHeartRateScale(roundedHeartRate);
+    {
+        float phase = frac(_Time.y * roundedHeartRate / 60.0);
+        scale *= calculateHeartRateScale(roundedHeartRate, phase);
+    }
     
     float2 uv2 = invAffineTransform(fd.uvMain, offset, -_DecalRotation, scale);
     
@@ -339,7 +383,8 @@ void lilGetDecalNumber(inout lilFragData fd LIL_SAMP_IN_FUNC(samp))
     
     float3 numberColor = sampleSpriteWithSpacing(roundedHeartRate, numUv, _NumTexDisplaylength, float(_NumTexAlignment), _NumTexCharacterOffset, _NumTexDigitSpacing);
     
-    float numberMask = (dot(numberColor, numberColor) > 0.000001) ? uvMask : 0.0;
+    float colorMagnitudeSq = numberColor.x*numberColor.x + numberColor.y*numberColor.y + numberColor.z*numberColor.z;
+    float numberMask = (colorMagnitudeSq > 0.000001) ? uvMask : 0.0;
     
     if (numberMask > 0.001)
     {
