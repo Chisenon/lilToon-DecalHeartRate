@@ -1,6 +1,8 @@
 # lilToon-DecalHeartRate
 
-lilToonベースの心拍数表示に特化したDecalShader
+### lilToonベースの心拍数表示に特化したDecalShader
+
+<img width="1174" height="758" alt="DHR_Number" src="https://github.com/user-attachments/assets/82961c4b-3a69-4c4e-bdb0-5f4c960b8aea" />
 
 ## インストール方法
 
@@ -23,6 +25,14 @@ lilToonベースの心拍数表示に特化したDecalShader
 - **スケール制御**： 心拍数に応じてテクスチャのスケールを動的に変更
 - **位置・回転調整**： デカールの位置、回転、スケールを自由に調整可能
 - **ブレンドモード**： 複数のブレンドモードに対応
+
+## デモギャラリー
+
+### エミッション発光
+<img width="958" height="566" alt="DHR_Emission" src="https://github.com/user-attachments/assets/8a035879-e42c-428c-864f-62aeab48b459" />
+
+### 心拍数によるスケール変化
+<img width="936" height="652" alt="DHR_Scale" src="https://github.com/user-attachments/assets/8e673eae-8709-46c6-9a11-78a417f22df7" />
 
 ## 使用方法
 
