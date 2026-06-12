@@ -46,6 +46,21 @@
 
 **VRChatでの動的制御**： リアルタイムで心拍数を変更するには、OSCでShaderを適応したMaterialのParameterを動かす必要があります。
 
+## Installer (Coming Soon)
+
+複雑な手動設定を自動化し、最小工程で導入を完結させる専用GUIツールを開発中です！
+
+<img width="471" height="481" alt="Installer" src="https://github.com/user-attachments/assets/f3556de0-cc60-42e1-8b1e-9b6aeae46302" />
+
+- **One-Click Setup**：NDMFを活用し、アバターを破壊せず自動で適用
+- **Modern UI**：Unity標準機能で構成しつつ、迷いのない操作体験を追求
+
+※ 現在、有償配布に向けて最終調整中です。
+
+設計の詳細は[先行公開ドキュメント](https://chisenon.github.io/ChiseDocument/ja_JP/dhri/dhri_index.html)をご確認ください。
+
+
+
 ## ライセンス
 
 MIT License
