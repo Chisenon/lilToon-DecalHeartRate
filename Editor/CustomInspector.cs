@@ -41,6 +41,14 @@ namespace lilToon
         MaterialProperty _HeartRateEmissionMaxTexture;
         MaterialProperty _UseHeartRateScaleTexture;
         MaterialProperty _HeartRateScaleIntensity;
+        MaterialProperty _DecalNumberVisibilityThreshold;
+        MaterialProperty _DecalNumberThresholdAffectsDisplay;
+        MaterialProperty _DecalNumberThresholdAffectsEmission;
+        MaterialProperty _HideDecalTextureWhenZero;
+        MaterialProperty _DecalTextureVisibilityThreshold;
+        MaterialProperty _DecalTextureThresholdAffectsDisplay;
+        MaterialProperty _DecalTextureThresholdAffectsEmission;
+        MaterialProperty _DecalTextureThresholdAffectsScale;
         
         // Number Decal Emission Mask and Color
         MaterialProperty _DecalNumberEmissionMask;
@@ -99,6 +107,14 @@ namespace lilToon
             _HeartRateEmissionMaxTexture = FindProperty("_HeartRateEmissionMaxTexture", props);
             _UseHeartRateScaleTexture = FindProperty("_UseHeartRateScaleTexture", props);
             _HeartRateScaleIntensity = FindProperty("_HeartRateScaleIntensity", props);
+            _DecalNumberVisibilityThreshold = FindProperty("_DecalNumberVisibilityThreshold", props);
+            _DecalNumberThresholdAffectsDisplay = FindProperty("_DecalNumberThresholdAffectsDisplay", props);
+            _DecalNumberThresholdAffectsEmission = FindProperty("_DecalNumberThresholdAffectsEmission", props);
+            _HideDecalTextureWhenZero = FindProperty("_HideDecalTextureWhenZero", props);
+            _DecalTextureVisibilityThreshold = FindProperty("_DecalTextureVisibilityThreshold", props);
+            _DecalTextureThresholdAffectsDisplay = FindProperty("_DecalTextureThresholdAffectsDisplay", props);
+            _DecalTextureThresholdAffectsEmission = FindProperty("_DecalTextureThresholdAffectsEmission", props);
+            _DecalTextureThresholdAffectsScale = FindProperty("_DecalTextureThresholdAffectsScale", props);
             
             // Load new emission properties
             _DecalNumberEmissionMask = FindProperty("_DecalNumberEmissionMask", props);
@@ -257,6 +273,13 @@ namespace lilToon
                     EditorGUILayout.LabelField("Visibility", EditorStyles.boldLabel);
                     EditorGUI.indentLevel++;
                     m_MaterialEditor.ShaderProperty(_HideDecalNumberWhenZero, "Visibility Mode");
+                    if(_HideDecalNumberWhenZero.floatValue == 1)
+                    {
+                        m_MaterialEditor.ShaderProperty(_DecalNumberVisibilityThreshold, "Threshold Value");
+                        EditorGUILayout.Space(3);
+                        m_MaterialEditor.ShaderProperty(_DecalNumberThresholdAffectsDisplay, "Apply Threshold To Display");
+                        m_MaterialEditor.ShaderProperty(_DecalNumberThresholdAffectsEmission, "Apply Threshold To Emission");
+                    }
                     EditorGUI.indentLevel--;
 
                     DrawLine();
@@ -364,6 +387,22 @@ namespace lilToon
 
                     DrawLine();
 
+                    // Visibility Settings
+                    EditorGUILayout.LabelField("Visibility", EditorStyles.boldLabel);
+                    EditorGUI.indentLevel++;
+                    m_MaterialEditor.ShaderProperty(_HideDecalTextureWhenZero, "Visibility Mode");
+                    if(_HideDecalTextureWhenZero.floatValue == 1)
+                    {
+                        m_MaterialEditor.ShaderProperty(_DecalTextureVisibilityThreshold, "Threshold Value");
+                        EditorGUILayout.Space(3);
+                        m_MaterialEditor.ShaderProperty(_DecalTextureThresholdAffectsDisplay, "Apply Threshold To Display");
+                        m_MaterialEditor.ShaderProperty(_DecalTextureThresholdAffectsEmission, "Apply Threshold To Emission");
+                        m_MaterialEditor.ShaderProperty(_DecalTextureThresholdAffectsScale, "Apply Threshold To Scale");
+                    }
+                    EditorGUI.indentLevel--;
+
+                    DrawLine();
+
                     // Transform Settings
                     EditorGUILayout.LabelField("Transform", EditorStyles.boldLabel);
                     EditorGUI.indentLevel++;
@@ -404,7 +443,7 @@ namespace lilToon
 
                     // Rotation
                     m_MaterialEditor.ShaderProperty(_DecalRotation, "Rotation Angle");
-                    EditorGUI.indentLevel--;                    DrawLine();
+                    EditorGUI.indentLevel--;
 
                     // Emission Settings
                     EditorGUILayout.LabelField("Emission", EditorStyles.boldLabel);

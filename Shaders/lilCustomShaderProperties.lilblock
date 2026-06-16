@@ -5,8 +5,11 @@ _FloatHeartRateC                         ("HeartRate", float) = 0
 // Toggle Controls
 [lilToggleLeft] _ActiveDecalNumber      ("Number Active Toggle", Int) = 0
 [lilToggleLeft] _ActiveDecalTexture     ("Texture Active Toggle", Int) = 0
-[Enum(Always Show,0,Hide Below Zero,1)]
+[Enum(Always Show,0,Hide Below Threshold,1)]
                 _HideDecalNumberWhenZero ("Number Visibility Mode", Int) = 0
+                _DecalNumberVisibilityThreshold ("Visibility Threshold", Range(0, 300)) = 0
+[lilToggle]     _DecalNumberThresholdAffectsDisplay ("Threshold Affects Display", Int) = 1
+[lilToggle]     _DecalNumberThresholdAffectsEmission ("Threshold Affects Emission", Int) = 1
 
 // Number Texture Properties
 [HDR][lilHDR]   _SpriteNumberTextureColor   ("Color", Color) = (1,1,1,1)
@@ -41,6 +44,12 @@ _FloatHeartRateC                         ("HeartRate", float) = 0
                 _DecalTexture                ("Texture", 2D) = "white" {}
 [Enum(Normal,0,Multiply,3)]
                 _DecalTextureBlendMode       ("Blend Mode", Int) = 0
+[Enum(Always Show,0,Hide Below Threshold,1)]
+                _HideDecalTextureWhenZero    ("Texture Visibility Mode", Int) = 0
+                _DecalTextureVisibilityThreshold ("Visibility Threshold", Range(0, 300)) = 0
+[lilToggle]     _DecalTextureThresholdAffectsDisplay ("Threshold Affects Display", Int) = 1
+[lilToggle]     _DecalTextureThresholdAffectsEmission ("Threshold Affects Emission", Int) = 1
+[lilToggle]     _DecalTextureThresholdAffectsScale ("Threshold Affects Scale", Int) = 1
 [lilVec4]       _DecalPositionXVector        ("Decal Position X", Vector) = (0.0, 0.0, 0.0, 0.0)
 [lilVec4]       _DecalPositionYVector        ("Decal Position Y", Vector) = (0.0, 0.0, 0.0, 0.0)
 [lilVec4]       _DecalScaleXVector           ("Decal Scale X", Vector) = (0.5, 0.5, 0.5, 0.5)

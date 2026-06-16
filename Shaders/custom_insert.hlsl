@@ -325,10 +325,15 @@ void lilGetDecalTexture(inout lilFragData fd LIL_SAMP_IN_FUNC(samp))
     if (!_ActiveDecalTexture) return;
     
     float roundedHeartRate = roundHalfUp(_FloatHeartRateC);
+    bool isThresholdMode = (_HideDecalTextureWhenZero == 1);
+    bool isThresholdPassed = (roundedHeartRate >= _DecalTextureVisibilityThreshold);
+    bool allowDisplay = !isThresholdMode || _DecalTextureThresholdAffectsDisplay == 0 || isThresholdPassed;
+    bool allowEmission = !isThresholdMode || _DecalTextureThresholdAffectsEmission == 0 || isThresholdPassed;
+    bool allowScale = !isThresholdMode || _DecalTextureThresholdAffectsScale == 0 || isThresholdPassed;
     
     float2 offset = float2(_DecalPositionXVector.x, _DecalPositionYVector.x);    float2 scale = max(float2(_DecalScaleXVector.x, _DecalScaleYVector.x), float2(0.001, 0.001));
     
-    if (_UseHeartRateScaleTexture && roundedHeartRate > 0)
+    if (_UseHeartRateScaleTexture && roundedHeartRate > 0 && allowScale)
     {
         float phase = frac(_Time.y * roundedHeartRate / 60.0);
         scale *= calculateHeartRateScale(roundedHeartRate, phase);
@@ -343,9 +348,16 @@ void lilGetDecalTexture(inout lilFragData fd LIL_SAMP_IN_FUNC(samp))
     float decalMask = decalColor.a * uvMask;
     if (decalMask > 0.001)
     {
-        fd.col.rgb = lerp(fd.col.rgb, lilBlendColor(fd.col.rgb, decalColor.rgb, decalMask, _DecalTextureBlendMode), decalMask);        
+        if (allowDisplay)
+        {
+            fd.col.rgb = lerp(fd.col.rgb, lilBlendColor(fd.col.rgb, decalColor.rgb, decalMask, _DecalTextureBlendMode), decalMask);
+        }
         float emissionStrength;
-        if (_UseHeartRateEmissionTexture)
+        if (!allowEmission)
+        {
+            emissionStrength = 0.0;
+        }
+        else if (_UseHeartRateEmissionTexture)
         {
             emissionStrength = calculateHeartRateEmissionByPattern(roundedHeartRate, _HeartRateEmissionMinTexture, _HeartRateEmissionMaxTexture, _DecalTextureEmissionPattern) * 100.0;
         }
@@ -372,8 +384,10 @@ void lilGetDecalNumber(inout lilFragData fd LIL_SAMP_IN_FUNC(samp))
     if (!_ActiveDecalNumber) return;
     
     float roundedHeartRate = roundHalfUp(_FloatHeartRateC);
-    
-    if (_HideDecalNumberWhenZero == 1 && roundedHeartRate <= 0.0) return;
+    bool isThresholdMode = (_HideDecalNumberWhenZero == 1);
+    bool isThresholdPassed = (roundedHeartRate >= _DecalNumberVisibilityThreshold);
+    bool allowDisplay = !isThresholdMode || _DecalNumberThresholdAffectsDisplay == 0 || isThresholdPassed;
+    bool allowEmission = !isThresholdMode || _DecalNumberThresholdAffectsEmission == 0 || isThresholdPassed;
     
     float2 offset = float2(_TexPositionXVector.x, _TexPositionYVector.x);    float2 scale = max(float2(_TexScaleXVector.x, _TexScaleYVector.x), float2(0.001, 0.001));
     float2 numUv = invAffineTransform(fd.uvMain, offset, -_NumTexRotation, scale);
@@ -390,9 +404,16 @@ void lilGetDecalNumber(inout lilFragData fd LIL_SAMP_IN_FUNC(samp))
     {
         float3 finalNumberColor = numberColor * _SpriteNumberTextureColor.rgb;
         
-        fd.col.rgb = lerp(fd.col.rgb, lilBlendColor(fd.col.rgb, finalNumberColor, numberMask, _NumberTextureBlendMode), numberMask);        
+        if (allowDisplay)
+        {
+            fd.col.rgb = lerp(fd.col.rgb, lilBlendColor(fd.col.rgb, finalNumberColor, numberMask, _NumberTextureBlendMode), numberMask);
+        }
         float emissionStrength;
-        if (_UseHeartRateEmission)
+        if (!allowEmission)
+        {
+            emissionStrength = 0.0;
+        }
+        else if (_UseHeartRateEmission)
         {
             emissionStrength = calculateHeartRateEmissionByPattern(roundedHeartRate, _HeartRateEmissionMin, _HeartRateEmissionMax, _DecalNumberEmissionPattern) * 100.0;
         }
